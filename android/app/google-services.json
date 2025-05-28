@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "655454790901",
+    "project_id": "koontaa-7a1a5",
+    "storage_bucket": "koontaa-7a1a5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:655454790901:android:d02afe4406198e5897d1bc",
+        "android_client_info": {
+          "package_name": "com.example.koontaa"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCYKOVjgO1-jC0P6GQ1-Dn1U6AxWtPhyGs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
