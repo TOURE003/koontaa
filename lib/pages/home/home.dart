@@ -15,7 +15,7 @@ class _HomeState extends State<Home> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: homeAppBarre(context),
-      bottomNavigationBar: homeBottomPage(() {
+      bottomNavigationBar: homeBottomPage(0, 0, () {
         setState(() {});
       }),
     );
