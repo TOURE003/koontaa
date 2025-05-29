@@ -39,3 +39,32 @@ PreferredSizeWidget homeAppBarre(context) {
     ),
   );
 }
+
+int pageBottomIndex = 0;
+
+Widget homeBottomPage(Function setStating) {
+  return NavigationBar(
+    selectedIndex: pageBottomIndex,
+    onDestinationSelected: (int index) {
+      pageBottomIndex = index;
+      setStating();
+    },
+
+    backgroundColor: const Color.fromARGB(255, 243, 241, 241),
+    destinations: [
+      NavigationDestination(
+        icon: Icon(Icons.shopping_basket),
+        label: "Le maché",
+      ),
+      NavigationDestination(
+        icon: Icon(Icons.filter_tilt_shift),
+        label: "Mon magasin",
+        tooltip: "12",
+        enabled: true,
+        selectedIcon: Icon(Icons.add),
+      ),
+      NavigationDestination(icon: Icon(Icons.group), label: "Communauté"),
+      NavigationDestination(icon: Icon(Icons.phone), label: "Appel"),
+    ],
+  );
+}
