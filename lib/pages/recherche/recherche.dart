@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:koontaa/pages/recherche/recherche_widgets.dart';
 
 class Recherche extends StatefulWidget {
   const Recherche({super.key, required this.title});
@@ -12,6 +13,14 @@ class Recherche extends StatefulWidget {
 class _RechercheeState extends State<Recherche> {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(body: Center(child: Text("data")));
+    return Scaffold(
+      appBar: rechercheAppBarre(context),
+      body: ValueListenableBuilder(
+        valueListenable: searchController,
+        builder: (context, TextEditingValue value, _) {
+          return Center(child: Text("Texte saisi : ${value.text}"));
+        },
+      ),
+    );
   }
 }
