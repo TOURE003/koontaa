@@ -14,7 +14,8 @@ class _HomeState extends State<Home> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: homeAppBarre(context),
+      backgroundColor: Color(0xFFF9EFE0),
+      body: expp(),
       bottomNavigationBar: homeBottomPage(0, 0, () {
         setState(() {});
       }),
