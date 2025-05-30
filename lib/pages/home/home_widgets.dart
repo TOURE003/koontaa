@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:koontaa/functions/firebase_auth.dart';
 import 'package:koontaa/pages/recherche/recherche.dart';
 import 'package:koontaa/functions/fonctions.dart';
+import 'package:koontaa/pages/compte/connection/page_redirection_compte_connection.dart';
+//import 'package:koontaa/pages/compte/connection/page_connection.dart';
 
 PreferredSizeWidget homeAppBarre(context) {
   return PreferredSize(
@@ -14,7 +17,12 @@ PreferredSizeWidget homeAppBarre(context) {
 }
 
 int pageBottomIndex = 0;
-Widget homeBottomPage(int nbrPanier, int nbrMagasin, Function setStating) {
+Widget homeBottomPage(
+  BuildContext context,
+  int nbrPanier,
+  int nbrMagasin,
+  Function setStating,
+) {
   return NavigationBarTheme(
     data: NavigationBarThemeData(
       indicatorColor:
@@ -30,7 +38,18 @@ Widget homeBottomPage(int nbrPanier, int nbrMagasin, Function setStating) {
     child: NavigationBar(
       selectedIndex: pageBottomIndex,
       onDestinationSelected: (int index) {
-        pageBottomIndex = index;
+        if (index == 3) {
+          if (AuthFirebase().currentUser != null) {
+            pageBottomIndex = index;
+          } else {
+            changePage(
+              context,
+              RedirectionPageCompteConnection(title: "redirection"),
+            );
+          }
+        } else {
+          pageBottomIndex = index;
+        }
         setStating();
       },
 

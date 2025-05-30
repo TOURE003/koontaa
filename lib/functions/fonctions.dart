@@ -6,4 +6,5 @@ void changePage(BuildContext context, Widget page) {
 
 Color couleurDeApp() {
   return Colors.deepOrange;
+  // BE4A00
 }

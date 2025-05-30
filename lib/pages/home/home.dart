@@ -16,7 +16,7 @@ class _HomeState extends State<Home> {
     return Scaffold(
       backgroundColor: Color(0xFFF9EFE0),
       body: expp(),
-      bottomNavigationBar: homeBottomPage(0, 0, () {
+      bottomNavigationBar: homeBottomPage(context, 0, 0, () {
         setState(() {});
       }),
     );
