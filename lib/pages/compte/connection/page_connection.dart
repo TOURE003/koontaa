@@ -66,6 +66,20 @@ Widget bodyPageConnectionConnection() {
             ),
             SizedBox(height: 5),
             TextFormField(
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Ce champ est requis';
+                }
+                final emailRegex = RegExp(
+                  r'^(([\w-\.]+@([\w-]+\.)+[\w-]{2,4})|(0[0-9]{9}|\+225[0-9]{10}))$',
+                );
+                if (!emailRegex.hasMatch(value)) {
+                  return 'Adresse email ou Numéro de téléphone Invalide.';
+                }
+
+                return null;
+              },
+
               decoration: InputDecoration(
                 enabledBorder: OutlineInputBorder(
                   borderSide: BorderSide(
@@ -82,7 +96,6 @@ Widget bodyPageConnectionConnection() {
                   ),
                   borderRadius: BorderRadius.circular(8),
                 ),
-
                 filled: true,
                 fillColor: Colors.white,
                 label: Text(
@@ -96,6 +109,19 @@ Widget bodyPageConnectionConnection() {
             ),
             SizedBox(height: 20),
             TextFormField(
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Veuillez entrer un mot de passe';
+                }
+
+                final passwordRegex = RegExp(r'^.{4,}$');
+
+                if (!passwordRegex.hasMatch(value)) {
+                  return 'Mot de passe trop court (4 caractères min)';
+                }
+
+                return null;
+              },
               decoration: InputDecoration(
                 enabledBorder: OutlineInputBorder(
                   borderSide: BorderSide(
@@ -125,7 +151,9 @@ Widget bodyPageConnectionConnection() {
             SizedBox(
               width: double.infinity, // prend toute la largeur disponible
               child: ElevatedButton(
-                onPressed: () {},
+                onPressed: () async {
+                  if (_formKeyConnection.currentState!.validate()) {}
+                },
                 style: ElevatedButton.styleFrom(
                   elevation: 0, // pas d’ombre
                   backgroundColor: Color(
