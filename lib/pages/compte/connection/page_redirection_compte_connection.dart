@@ -23,11 +23,12 @@ class _RedirectionPageCompteConnectionState
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const CircularProgressIndicator();
         } else if (snapshot.hasData) {
-          pageBottomIndex = 3;
+          //pageBottomIndex = 3;
           return const Home(
             title: "Home",
           ); // MyHomePage(title: "Page d'Acceuil");
         } else {
+          //pageBottomIndex = 0;
           return const PageConnection(
             title: "Connection",
           ); // LoginPage(title: "Page de Connection");
