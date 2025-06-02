@@ -14,15 +14,25 @@ class PageConnection extends StatefulWidget {
   State<PageConnection> createState() => _PageConnectionState();
 }
 
+int _indexPage = 0;
+
 class _PageConnectionState extends State<PageConnection> {
   @override
   Widget build(BuildContext context) {
+    List<Widget> pagesConnectionEtCompte = [
+      bodyPageConnectionConnection(() {
+        setState(() {});
+      }, context),
+      bodyPageCreationDeCpmte(() {
+        setState(() {});
+      }, context),
+    ];
+
     return Scaffold(
       backgroundColor: couleurDeApp(),
       appBar: appBarConnection(),
-      body: bodyPageConnectionConnection(() {
-        setState(() {});
-      }, context),
+      body:
+          pagesConnectionEtCompte[_indexPage], //bodyPageConnectionConnection(() {setState(() {});}, context),
     );
   }
 }
@@ -34,6 +44,206 @@ PreferredSizeWidget appBarConnection() {
   );
 }
 
+final GlobalKey<FormState> _formKeyCreationCompte = GlobalKey<FormState>();
+
+Widget bodyPageCreationDeCpmte(Function setStating, BuildContext context) {
+  return SingleChildScrollView(
+    padding: EdgeInsets.symmetric(horizontal: 35),
+    child: Center(
+      child: Form(
+        key: _formKeyCreationCompte,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Image.asset("assets/images/band3.PNG", height: 200),
+            SizedBox(height: 16),
+            SizedBox(
+              child: Text("Créer un compte !", style: TextStyle(fontSize: 35)),
+            ),
+            SizedBox(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text("Créer un compte  ou"),
+                  TextButton(
+                    onPressed: () {
+                      _indexPage = 0;
+                      setStating();
+                    },
+                    child: Text(
+                      "Cliquez ici si vous avez déjà un compte !",
+                      style: TextStyle(
+                        color: Color(0xffBE4A00),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 30),
+            inputFieldNomEtPrenomCreationCompte(),
+            SizedBox(height: 15),
+            inputFieldEmailPhone(),
+            SizedBox(height: 15),
+            inputFieldMotDPasse(
+              messageErr: "Le mot de passe doit conténir au moin 4 caractères.",
+            ),
+            SizedBox(height: 15),
+            inputFieldMotDPasseConfirmation(),
+            SizedBox(height: 35),
+            bouttonValidationCreerCompte(
+              setStating,
+              context,
+              _formKeyCreationCompte,
+            ),
+            SizedBox(height: 35),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text("Vous avez déjà un compte ?"),
+                TextButton(
+                  onPressed: () {
+                    _indexPage = 0;
+                    setStating();
+                  },
+                  child: Text(
+                    "Cliquez ici pour vous connecter",
+                    style: TextStyle(
+                      color: Color(0xffBE4A00),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+final TextEditingController _nomEtPrenomCreationCompteController =
+    TextEditingController();
+Widget inputFieldNomEtPrenomCreationCompte() {
+  return TextFormField(
+    controller: _nomEtPrenomCreationCompteController,
+    validator: (value) {
+      if (value == null || value.isEmpty) {
+        return 'Ce champ est requis';
+      }
+      final emailRegex = RegExp(
+        r"^[A-Za-zÀ-ÖØ-öø-ÿ]+([ '-][A-Za-zÀ-ÖØ-öø-ÿ]+)+$",
+      );
+      if (!emailRegex.hasMatch(value)) {
+        return "Le nom saisi n'est pas valide";
+      }
+
+      return null;
+    },
+
+    decoration: InputDecoration(
+      enabledBorder: OutlineInputBorder(
+        borderSide: BorderSide(
+          color: Colors.grey, // Couleur de la bordure
+          width: 1.0, // Épaisseur fine
+        ),
+        borderRadius: BorderRadius.circular(8), // Coins arrondis
+      ),
+
+      focusedBorder: OutlineInputBorder(
+        borderSide: BorderSide(
+          color: Color(0xFFBE4A00), // Orange Koontaa par exemple
+          width: 1.5, // Légèrement plus épaisse
+        ),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      filled: true,
+      fillColor: Colors.white,
+      label: Text("Nom complet", style: TextStyle(fontSize: 20)),
+      border: OutlineInputBorder(
+        borderRadius: const BorderRadius.all(Radius.circular(15)),
+      ),
+    ),
+  );
+}
+
+final TextEditingController _motDePasseConfirmationController =
+    TextEditingController();
+Widget inputFieldMotDPasseConfirmation() {
+  return TextFormField(
+    controller: _motDePasseConfirmationController,
+    validator: (value) {
+      if ((value == null || value.isEmpty) &
+          _motDePasseConnectionController.text.isNotEmpty) {
+        return 'Confirmez le mot de passe';
+      }
+
+      if (value != _motDePasseConnectionController.text &&
+          _motDePasseConnectionController.text.isNotEmpty) {
+        return 'Les mots de passes ne correspondent pas !';
+      }
+
+      return null;
+    },
+    decoration: InputDecoration(
+      enabledBorder: OutlineInputBorder(
+        borderSide: BorderSide(
+          color: Colors.grey, // Couleur de la bordure
+          width: 1.0, // Épaisseur fine
+        ),
+        borderRadius: BorderRadius.circular(8), // Coins arrondis
+      ),
+
+      focusedBorder: OutlineInputBorder(
+        borderSide: BorderSide(
+          color: Color(0xFFBE4A00), // Orange Koontaa par exemple
+          width: 1.5, // Légèrement plus épaisse
+        ),
+        borderRadius: BorderRadius.circular(8),
+      ),
+
+      filled: true,
+      fillColor: Colors.white,
+      label: Text("Confirmez le mot de passe", style: TextStyle(fontSize: 20)),
+      border: OutlineInputBorder(
+        borderRadius: const BorderRadius.all(Radius.circular(15)),
+      ),
+    ),
+  );
+}
+
+Widget bouttonValidationCreerCompte(
+  Function setStating,
+  BuildContext context,
+  GlobalKey<FormState> cleForm,
+) {
+  return SizedBox(
+    width: double.infinity, // prend toute la largeur disponible
+    child: ElevatedButton(
+      onPressed: () {
+        if (cleForm.currentState!.validate()) {}
+      },
+      style: ElevatedButton.styleFrom(
+        elevation: 0, // pas d’ombre
+        backgroundColor: Color(0xffBE4A00), // ou toute autre couleur sauf rouge
+        foregroundColor: Colors.white, // couleur du texte/icône
+        padding: EdgeInsets.symmetric(vertical: 16), // hauteur du bouton
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10), // coins arrondis optionnels
+        ),
+      ),
+      child: !_lesBouttonsSontActive && circularBoutton1
+          ? circular()
+          : Text("Créez le compte"),
+    ),
+  );
+}
+
+// Creation de Widget page de création de compte------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------------------------------------------
 final GlobalKey<FormState> _formKeyConnection = GlobalKey<FormState>();
 //final _emailController = TextEditingController();
 
@@ -58,7 +268,10 @@ Widget bodyPageConnectionConnection(Function setStating, BuildContext context) {
                 children: [
                   Text("Connectez vous  ou"),
                   TextButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      _indexPage = 1;
+                      setStating();
+                    },
                     child: Text(
                       "Cliquez ici pour créer un compte",
                       style: TextStyle(
@@ -98,7 +311,10 @@ Widget bodyPageConnectionConnection(Function setStating, BuildContext context) {
               children: [
                 Text("Vous n'avez pas de compte ?"),
                 TextButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    _indexPage = 1;
+                    setStating();
+                  },
                   child: Text(
                     "Cliquez ici pour créer un compte",
                     style: TextStyle(
@@ -163,7 +379,7 @@ Widget inputFieldEmailPhone() {
 
 final TextEditingController _motDePasseConnectionController =
     TextEditingController();
-Widget inputFieldMotDPasse() {
+Widget inputFieldMotDPasse({String messageErr = "Mot de passe Incorrect !"}) {
   return TextFormField(
     controller: _motDePasseConnectionController,
     validator: (value) {
@@ -174,7 +390,7 @@ Widget inputFieldMotDPasse() {
       final passwordRegex = RegExp(r'^.{4,}$');
 
       if (!passwordRegex.hasMatch(value)) {
-        return 'Mot de passe Incorrect !';
+        return messageErr;
       }
 
       return null;
