@@ -50,7 +50,7 @@ Widget bodyPageConnectionConnection(Function setStating, BuildContext context) {
             Image.asset("assets/images/band3.PNG", height: 200),
             SizedBox(height: 16),
             SizedBox(
-              child: Text("Connection !", style: TextStyle(fontSize: 35)),
+              child: Text("Connexion !", style: TextStyle(fontSize: 35)),
             ),
             SizedBox(
               child: Row(
@@ -174,7 +174,7 @@ Widget inputFieldMotDPasse() {
       final passwordRegex = RegExp(r'^.{4,}$');
 
       if (!passwordRegex.hasMatch(value)) {
-        return 'Mot de passe trop court (4 caractères min)';
+        return 'Mot de passe Incorrect !';
       }
 
       return null;
