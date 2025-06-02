@@ -70,14 +70,10 @@ class AuthFirebase {
 
   /// Connexion avec e-mail et mot de passe
   Future<void> loginWithEmailAndPassword(String email, String password) async {
-    try {
-      await _firebaseAuth.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-    } catch (e) {
-      throw Exception("Échec de connexion : ${e.toString()}");
-    }
+    await _firebaseAuth.signInWithEmailAndPassword(
+      email: email,
+      password: password,
+    ); //throw Exception("Échec de connexion : ${e.toString()}");
   }
 
   /// Déconnexion de l'utilisateur
@@ -96,7 +92,7 @@ class AuthFirebase {
         password: password,
       );
     } catch (e) {
-      throw Exception("Échec de création du compte : ${e.toString()}");
+      //throw Exception("Échec de création du compte : ${e.toString()}");
     }
   }
 
@@ -116,7 +112,8 @@ class AuthFirebase {
 
       return await _firebaseAuth.signInWithCredential(credential);
     } catch (e) {
-      throw Exception("Échec de connexion Google : ${e.toString()}");
+      //throw Exception("Échec de connexion Google : ${e.toString()}");
+      return null;
     }
   }
 
@@ -141,10 +138,12 @@ class AuthFirebase {
 
         return userCredential;
       } else {
-        throw Exception("Échec de connexion Facebook : ${result.message}");
+        return null;
+        //throw Exception("Échec de connexion Facebook : ${result.message}");
       }
     } catch (e) {
-      throw Exception("Erreur Facebook : ${e.toString()}");
+      return null;
+      //throw Exception("Erreur Facebook : ${e.toString()}");
     }
   }
 
