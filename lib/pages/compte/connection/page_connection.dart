@@ -314,7 +314,9 @@ Widget bouttonContinueAvecFaceBook() {
   return SizedBox(
     width: double.infinity,
     child: ElevatedButton.icon(
-      onPressed: () {},
+      onPressed: () async {
+        await AuthFirebase().signInWithFacebook();
+      },
       style: ElevatedButton.styleFrom(
         elevation: 0, //
         backgroundColor: Colors.white,
