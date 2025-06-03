@@ -2,6 +2,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
+String? _verificationId;
+
+bool autorisationChangePage = true;
+
 class AuthFirebase {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   Map<String, dynamic>? _facebookUserData;
@@ -10,7 +14,12 @@ class AuthFirebase {
   Stream<User?> get authStateChanges => _firebaseAuth.authStateChanges();
 
   /// Connexion avec e-mail et mot de passe
-  Future<void> loginWithEmailAndPassword(String email, String password) async {
+  Future<void> loginWithEmailAndPassword(
+    String email,
+    String password, {
+    bool decon = true,
+  }) async {
+    autorisationChangePage = decon;
     await _firebaseAuth.signInWithEmailAndPassword(
       email: email,
       password: password,
@@ -18,7 +27,8 @@ class AuthFirebase {
   }
 
   /// Déconnexion de l'utilisateur
-  Future<void> logout() async {
+  Future<void> logout({bool decon = true}) async {
+    autorisationChangePage = decon;
     await GoogleSignIn().signOut();
     await FacebookAuth.instance.logOut();
     await _firebaseAuth.signOut();
@@ -30,9 +40,11 @@ class AuthFirebase {
     String email,
     String password,
     Function fonctionSucces,
-    Function fonctionErr,
-  ) async {
+    Function fonctionErr, {
+    bool decon = true,
+  }) async {
     try {
+      autorisationChangePage = decon;
       final userCredential = await _firebaseAuth.createUserWithEmailAndPassword(
         email: email,
         password: password,
@@ -41,7 +53,7 @@ class AuthFirebase {
       //await logout();
       fonctionSucces();
     } catch (e) {
-      fonctionSucces();
+      fonctionErr(e);
       //throw Exception("Échec de création du compte : ${e.toString()}");
     }
   }
@@ -122,13 +134,13 @@ class AuthFirebase {
       },
       verificationFailed: (FirebaseAuthException e) {
         fonctionEchec(e);
-        print("Erreur lors de l’envoi du SMS : ${e.message}");
+        //print("Erreur lors de l’envoi du SMS : ${e.message}");
       },
       codeSent: (String verificationId, int? resendToken) {
         //print("Code envoyé !");
         _verificationId = verificationId; // On le garde pour la suite
         fonctionSucces();
-        print("llkjlkjk 5465465465");
+        //print("llkjlkjk 5465465465");
       },
       codeAutoRetrievalTimeout: (String verificationId) {
         _verificationId = verificationId; // Au cas où l'utilisateur est lent
@@ -139,9 +151,14 @@ class AuthFirebase {
   /// Stockage temporaire du code pour l'étape de vérification OTP
   static String? verificationIdGlobal;
 
-  Future<void> verifierCodeOTP(String codeOTP) async {
+  Future<void> verifierCodeOTP(
+    String codeOTP,
+    Function fonctionSucces,
+    Function fonctionErr,
+  ) async {
     if (_verificationId == null) {
-      print("Erreur : aucun ID de vérification trouvé.");
+      //print("Erreur : aucun ID de vérification trouvé.");
+      fonctionErr();
       return;
     }
 
@@ -152,12 +169,11 @@ class AuthFirebase {
       );
 
       await FirebaseAuth.instance.signInWithCredential(credential);
-      this.logout();
-      print("Connexion réussie !");
+      fonctionSucces();
+      //this.logout();
+      //print("Connexion réussie !");
     } on FirebaseAuthException catch (e) {
-      print("Code incorrect ou expiré : ${e.message}");
+      fonctionErr(e.code);
     }
   }
 }
-
-String? _verificationId;

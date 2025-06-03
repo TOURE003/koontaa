@@ -245,6 +245,7 @@ Widget inputFieldMotDPasseConfirmation() {
   );
 }
 
+bool loadingBouttonCreation = false;
 Widget bouttonValidationCreerCompte(
   Function setStating,
   BuildContext context,
@@ -253,44 +254,66 @@ Widget bouttonValidationCreerCompte(
   return SizedBox(
     width: double.infinity, // prend toute la largeur disponible
     child: ElevatedButton(
-      onPressed: () async {
-        if (cleForm.currentState!.validate()) {
-          final phoneRegex = RegExp(r'^(0[0-9]{9}|\+225[0-9]{10})$');
-          final emailRegex = RegExp(r'^([\w-\.]+@([\w-]+\.)+[\w-]{2,4})$');
-          if (phoneRegex.hasMatch(_emailPhoneConnectionController.text)) {
-            await AuthFirebase().envoyerCodeSMS(
-              _emailPhoneConnectionController.text,
-              () {
-                _indexPage = 2;
+      onPressed: loadingBouttonCreation
+          ? null
+          : () async {
+              String numeroAjuste = ajouterIndicatifSiManquant(
+                _emailPhoneConnectionController.text,
+              );
+              if (cleForm.currentState!.validate()) {
+                loadingBouttonCreation = true;
                 setStating();
-              },
-              (e) {
-                messageErreurBar(
-                  context,
-                  messageErr: e.code == "network-request-failed"
-                      ? "Vérifiez votre connection internet."
-                      : "Une erreur est survénue. Réessayez plus tard.",
+                final phoneRegex = RegExp(r'^(0[0-9]{9}|\+225[0-9]{10})$');
+                final emailRegex = RegExp(
+                  r'^([\w-\.]+@([\w-]+\.)+[\w-]{2,4})$',
                 );
-              },
-            );
-          } else if (emailRegex.hasMatch(
-            _emailPhoneConnectionController.text,
-          )) {
-            AuthFirebase().createUserWithPassword(
-              _emailPhoneConnectionController.text,
-              _motDePasseConfirmationController.text,
-              () {
-                AuthFirebase().logout();
-                _indexPage = 3;
-                setStating();
-              },
-              () {
-                messageErreurBar(context, messageErr: "Erreur de connection");
-              },
-            );
-          }
-        }
-      },
+                if (phoneRegex.hasMatch(_emailPhoneConnectionController.text)) {
+                  await AuthFirebase().envoyerCodeSMS(
+                    numeroAjuste,
+                    () {
+                      _indexPage = 2;
+                      setStating();
+                    },
+                    (e) {
+                      loadingBouttonCreation = false;
+                      setStating();
+                      messageErreurBar(
+                        context,
+                        messageErr: e.code == "network-request-failed"
+                            ? "Vérifiez votre connection internet."
+                            : "Une erreur est survénue.  ${e.code}",
+                      );
+                    },
+                  );
+                } else if (emailRegex.hasMatch(
+                  _emailPhoneConnectionController.text,
+                )) {
+                  AuthFirebase().createUserWithPassword(
+                    _emailPhoneConnectionController.text,
+                    _motDePasseConfirmationController.text,
+                    () {
+                      AuthFirebase().logout(decon: false);
+                      _indexPage = 3;
+                      loadingBouttonCreation = false;
+                      setStating();
+                    },
+                    (e) {
+                      loadingBouttonCreation = false;
+                      setStating();
+
+                      String messageErreur = "Erreur de connection";
+                      if (e.code == "email-already-in-use") {
+                        messageErreur =
+                            "Cette adrèsse mail est déjé utilisé pour un autre compte !";
+                      }
+
+                      messageErreurBar(context, messageErr: messageErreur);
+                    },
+                    decon: false,
+                  );
+                }
+              }
+            },
       style: ElevatedButton.styleFrom(
         elevation: 0, // pas d’ombre
         backgroundColor: Color(0xffBE4A00), // ou toute autre couleur sauf rouge
@@ -300,7 +323,9 @@ Widget bouttonValidationCreerCompte(
           borderRadius: BorderRadius.circular(10), // coins arrondis optionnels
         ),
       ),
-      child: Text("Créez le compte"),
+      child: loadingBouttonCreation
+          ? circular(message: "Création...")
+          : Text("Créez le compte"),
     ),
   );
 }
@@ -699,11 +724,11 @@ Widget bouttonContinueAvecFaceBook(Function setStating, BuildContext context) {
   );
 }
 
-Widget circular() {
+Widget circular({String message = "Connexion..."}) {
   return Row(
     mainAxisAlignment: MainAxisAlignment.center,
-    children: const [
-      SizedBox(
+    children: [
+      const SizedBox(
         height: 20,
         width: 20,
         child: CircularProgressIndicator(
@@ -711,10 +736,13 @@ Widget circular() {
           color: Color(0xffBE4A00),
         ),
       ),
-      SizedBox(width: 10),
+      const SizedBox(width: 10),
       Text(
-        "Connexion...",
-        style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
+        message,
+        style: const TextStyle(
+          fontWeight: FontWeight.bold,
+          color: Colors.black,
+        ),
       ),
     ],
   );
@@ -766,11 +794,8 @@ Widget bodyPageConfirmationOTP(Function setStating, BuildContext context) {
             ),
 
             SizedBox(height: 20),
-            buildOtpField(
-              onCompleted: (value) async {
-                await AuthFirebase().verifierCodeOTP(value);
-              },
-            ),
+            buildOtpField(context),
+
             SizedBox(height: 20),
             bouttonValidationOTP(setStating, context, _formKeyConnection),
             SizedBox(height: 6),
@@ -803,7 +828,8 @@ Widget bodyPageConfirmationOTP(Function setStating, BuildContext context) {
 
 final TextEditingController _verificationOTPController =
     TextEditingController();
-Widget buildOtpField({required void Function(String) onCompleted}) {
+bool loadingBouttonOTP = false;
+Widget buildOtpField(BuildContext context) {
   final defaultPinTheme = PinTheme(
     width: 56,
     height: 56,
@@ -834,7 +860,29 @@ Widget buildOtpField({required void Function(String) onCompleted}) {
         color: Colors.blue.shade50,
       ),
     ),
-    onCompleted: onCompleted,
+    onCompleted: loadingBouttonOTP
+        ? null
+        : (value) async {
+            String mailFactis =
+                "${_emailPhoneConnectionController.text.replaceAll("+225", "")}@koontaa.com";
+            await AuthFirebase().verifierCodeOTP(
+              value,
+              () async {
+                await AuthFirebase().logout(decon: false);
+                await AuthFirebase().createUserWithPassword(
+                  mailFactis,
+                  _motDePasseConfirmationController.text,
+                  () {
+                    _indexPage = 0;
+                  },
+                  () {},
+                );
+              },
+              (e) {
+                messageErreurBar(context, messageErr: e);
+              },
+            );
+          },
     //androidSmsAutofillMethod: AndroidSmsAutofillMethod.smsRetrieverApi,
     autofillHints: const [AutofillHints.oneTimeCode],
     keyboardType: TextInputType.number,
@@ -866,6 +914,27 @@ Widget bouttonValidationOTP(
   );
 }
 
+void verificationOTP(BuildContext context, value) async {
+  String mailFactis =
+      "${_emailPhoneConnectionController.text.replaceAll("+225", "")}@koontaa.com";
+  await AuthFirebase().verifierCodeOTP(
+    value,
+    () async {
+      await AuthFirebase().logout(decon: false);
+      await AuthFirebase().createUserWithPassword(
+        mailFactis,
+        _motDePasseConfirmationController.text,
+        () {
+          _indexPage = 0;
+        },
+        () {},
+      );
+    },
+    (e) {
+      messageErreurBar(context, messageErr: e);
+    },
+  );
+}
 //Widget de confirmation de mail----------------------------------------------------------------
 //----------------------------------------------------------------------------------------------
 
@@ -932,30 +1001,51 @@ Widget bodyPageConfirmationEmail(Function setStating, BuildContext context) {
   );
 }
 
+bool loadingBouttonConfiEmail = false;
 Widget bouttonValidationEmail(Function setStating, BuildContext context) {
   return SizedBox(
     width: double.infinity, // prend toute la largeur disponible
     child: ElevatedButton(
-      onPressed: () async {
-        try {
-          await AuthFirebase().loginWithEmailAndPassword(
-            _emailPhoneConnectionController.text,
-            _motDePasseConfirmationController.text,
-          );
+      onPressed: loadingBouttonConfiEmail
+          ? null
+          : () async {
+              try {
+                loadingBouttonConfiEmail = true;
+                setStating();
+                await AuthFirebase().loginWithEmailAndPassword(
+                  _emailPhoneConnectionController.text,
+                  _motDePasseConfirmationController.text,
+                  decon: false,
+                );
 
-          if (!AuthFirebase().currentUser!.emailVerified) {
-            AuthFirebase().logout();
-            messageErreurBar(
-              context,
-              messageErr: "Le mail n'a pas été vérifié !",
-            );
-          } else {
-            _indexPage = 0;
-          }
-        } on FirebaseAuthException catch (e) {
-          print(e);
-        }
-      },
+                if (!AuthFirebase().currentUser!.emailVerified) {
+                  loadingBouttonConfiEmail = false;
+                  setStating();
+                  await AuthFirebase().logout(decon: false);
+                  messageErreurBar(
+                    context,
+                    messageErr: "Le mail n'a pas été vérifié !",
+                  );
+                } else {
+                  loadingBouttonConfiEmail = false;
+                  _indexPage = 0;
+                  setStating();
+                  await AuthFirebase().logout(decon: false);
+                  await AuthFirebase().loginWithEmailAndPassword(
+                    _emailPhoneConnectionController.text,
+                    _motDePasseConfirmationController.text,
+                  );
+                }
+              } on FirebaseAuthException catch (e) {
+                //print(e);
+                loadingBouttonConfiEmail = false;
+                setStating();
+                messageErreurBar(
+                  context,
+                  messageErr: "Vérifiez votre connection internet !",
+                );
+              }
+            },
       style: ElevatedButton.styleFrom(
         elevation: 0, // pas d’ombre
         backgroundColor: Color(0xffBE4A00), // ou toute autre couleur sauf rouge
@@ -965,7 +1055,26 @@ Widget bouttonValidationEmail(Function setStating, BuildContext context) {
           borderRadius: BorderRadius.circular(10), // coins arrondis optionnels
         ),
       ),
-      child: Text("J’ai vérifié mon e-mail"),
+      child: loadingBouttonConfiEmail
+          ? circular(message: "Vérification")
+          : Text("J’ai vérifié mon e-mail"),
     ),
   );
+}
+
+String ajouterIndicatifSiManquant(String numero) {
+  numero = numero.trim(); // Supprimer les espaces inutiles
+
+  // Vérifie si le numéro commence par +225 ou 00225
+  if (numero.startsWith("+225") || numero.startsWith("00225")) {
+    return numero;
+  }
+
+  // Supprimer les zéros initiaux
+  /*if (numero.startsWith("0")) {
+    numero = numero.substring(1);
+  }*/
+
+  // Ajouter l’indicatif
+  return "+225$numero";
 }

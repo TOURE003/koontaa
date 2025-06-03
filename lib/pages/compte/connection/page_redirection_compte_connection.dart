@@ -20,9 +20,10 @@ class _RedirectionPageCompteConnectionState
     return StreamBuilder(
       stream: AuthFirebase().authStateChanges,
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
+        if (snapshot.connectionState == ConnectionState.waiting &&
+            autorisationChangePage) {
           return const CircularProgressIndicator();
-        } else if (snapshot.hasData) {
+        } else if (snapshot.hasData && autorisationChangePage) {
           //pageBottomIndex = 3;
           return const Home(
             title: "Home",

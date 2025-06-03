@@ -20,12 +20,12 @@ class _HomeState extends State<Home> {
     return Scaffold(
       backgroundColor: Color(0xFFF9EFE0),
       body: diffPageHomes[indexPage],
-      bottomNavigationBar: homeBottomPage(context, 0, 0, () {
+      bottomNavigationBar: homeBottomPage(context, 1, 0, () {
         setState(() {
           if (pageBottomIndex == 3 && AuthFirebase().currentUser != null) {
             indexPage = pageBottomIndex;
           } else {
-            indexPage = pageBottomIndex;
+            indexPage = 0;
           }
         });
       }),
