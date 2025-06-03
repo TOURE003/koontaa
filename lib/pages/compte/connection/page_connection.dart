@@ -1,9 +1,9 @@
 import 'dart:io';
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:koontaa/functions/firebase_auth.dart';
 import 'package:koontaa/functions/fonctions.dart';
+import 'package:pinput/pinput.dart';
 
 class PageConnection extends StatefulWidget {
   const PageConnection({super.key, required this.title});
@@ -24,23 +24,53 @@ class _PageConnectionState extends State<PageConnection> {
         setState(() {});
       }, context),
       bodyPageCreationDeCpmte(() {
+        try {
+          setState(() {});
+        } catch (e) {}
+      }, context),
+      bodyPageConfirmationOTP(() {
+        setState(() {});
+      }, context),
+      bodyPageConfirmationEmail(() {
         setState(() {});
       }, context),
     ];
 
     return Scaffold(
       backgroundColor: couleurDeApp(),
-      appBar: appBarConnection(),
+      appBar: appBarConnection(() {
+        setState(() {});
+      }, indexPageCible: _indexPage),
       body:
           pagesConnectionEtCompte[_indexPage], //bodyPageConnectionConnection(() {setState(() {});}, context),
     );
   }
 }
 
-PreferredSizeWidget appBarConnection() {
+PreferredSizeWidget appBarConnection(
+  Function setSteting, {
+  int indexPageCible = 0,
+}) {
   return PreferredSize(
     preferredSize: Size.fromHeight(30),
-    child: AppBar(backgroundColor: couleurDeApp()),
+    child: AppBar(
+      backgroundColor: couleurDeApp(),
+      automaticallyImplyLeading: indexPageCible == 0,
+      title: indexPageCible == 0
+          ? SizedBox()
+          : IconButton(
+              onPressed: () {
+                if (indexPageCible == 1 || indexPageCible == 2) {
+                  _indexPage = indexPageCible - 1;
+                  setSteting();
+                } else if (indexPageCible == 3) {
+                  _indexPage = 1;
+                  setSteting();
+                }
+              },
+              icon: Icon(Icons.close),
+            ),
+    ),
   );
 }
 
@@ -223,8 +253,43 @@ Widget bouttonValidationCreerCompte(
   return SizedBox(
     width: double.infinity, // prend toute la largeur disponible
     child: ElevatedButton(
-      onPressed: () {
-        if (cleForm.currentState!.validate()) {}
+      onPressed: () async {
+        if (cleForm.currentState!.validate()) {
+          final phoneRegex = RegExp(r'^(0[0-9]{9}|\+225[0-9]{10})$');
+          final emailRegex = RegExp(r'^([\w-\.]+@([\w-]+\.)+[\w-]{2,4})$');
+          if (phoneRegex.hasMatch(_emailPhoneConnectionController.text)) {
+            await AuthFirebase().envoyerCodeSMS(
+              _emailPhoneConnectionController.text,
+              () {
+                _indexPage = 2;
+                setStating();
+              },
+              (e) {
+                messageErreurBar(
+                  context,
+                  messageErr: e.code == "network-request-failed"
+                      ? "Vérifiez votre connection internet."
+                      : "Une erreur est survénue. Réessayez plus tard.",
+                );
+              },
+            );
+          } else if (emailRegex.hasMatch(
+            _emailPhoneConnectionController.text,
+          )) {
+            AuthFirebase().createUserWithPassword(
+              _emailPhoneConnectionController.text,
+              _motDePasseConfirmationController.text,
+              () {
+                AuthFirebase().logout();
+                _indexPage = 3;
+                setStating();
+              },
+              () {
+                messageErreurBar(context, messageErr: "Erreur de connection");
+              },
+            );
+          }
+        }
       },
       style: ElevatedButton.styleFrom(
         elevation: 0, // pas d’ombre
@@ -235,9 +300,7 @@ Widget bouttonValidationCreerCompte(
           borderRadius: BorderRadius.circular(10), // coins arrondis optionnels
         ),
       ),
-      child: !_lesBouttonsSontActive && circularBoutton1
-          ? circular()
-          : Text("Créez le compte"),
+      child: Text("Créez le compte"),
     ),
   );
 }
@@ -654,5 +717,255 @@ Widget circular() {
         style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
       ),
     ],
+  );
+}
+
+void messageErreurBar(
+  BuildContext context, {
+  String messageErr = "Une erreur s'est produit",
+}) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(messageErr),
+      behavior: SnackBarBehavior.floating,
+      backgroundColor: Colors.red,
+      showCloseIcon: true,
+    ),
+  );
+}
+//Widget de confirmation otp-------------------------------------------------------------
+//---------------------------------------------------------------------------------------
+
+final GlobalKey<FormState> _formKeyOTPVerification = GlobalKey<FormState>();
+Widget bodyPageConfirmationOTP(Function setStating, BuildContext context) {
+  return SingleChildScrollView(
+    padding: EdgeInsets.symmetric(horizontal: 35),
+    child: Center(
+      child: Form(
+        key: _formKeyOTPVerification,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Image.asset("assets/images/band3.PNG", height: 200),
+            SizedBox(height: 16),
+            SizedBox(
+              child: Text("Entrez le code !", style: TextStyle(fontSize: 35)),
+            ),
+            SizedBox(height: 25),
+            SizedBox(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text("Entrez le code que nous vous avons envoyer"),
+                  Text(" par sms s'il vous plat !"),
+                  SizedBox(height: 20),
+                  Text(_emailPhoneConnectionController.text),
+                ],
+              ),
+            ),
+
+            SizedBox(height: 20),
+            buildOtpField(
+              onCompleted: (value) async {
+                await AuthFirebase().verifierCodeOTP(value);
+              },
+            ),
+            SizedBox(height: 20),
+            bouttonValidationOTP(setStating, context, _formKeyConnection),
+            SizedBox(height: 6),
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text("Vous n'avez pas reussi le code? "),
+                TextButton(
+                  onPressed: () {
+                    _indexPage = 1;
+                    setStating();
+                  },
+                  child: Text(
+                    "Cliquez ici dans 60 s",
+                    style: TextStyle(
+                      color: Color(0xffBE4A00),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+final TextEditingController _verificationOTPController =
+    TextEditingController();
+Widget buildOtpField({required void Function(String) onCompleted}) {
+  final defaultPinTheme = PinTheme(
+    width: 56,
+    height: 56,
+    textStyle: const TextStyle(
+      fontSize: 20,
+      color: Colors.black,
+      fontWeight: FontWeight.w600,
+    ),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      border: Border.all(color: Colors.grey),
+      borderRadius: BorderRadius.circular(12),
+    ),
+  );
+
+  return Pinput(
+    autofocus: true,
+    length: 6,
+    controller: _verificationOTPController,
+    defaultPinTheme: defaultPinTheme,
+    focusedPinTheme: defaultPinTheme.copyWith(
+      decoration: defaultPinTheme.decoration!.copyWith(
+        border: Border.all(color: Colors.blue, width: 2),
+      ),
+    ),
+    submittedPinTheme: defaultPinTheme.copyWith(
+      decoration: defaultPinTheme.decoration!.copyWith(
+        color: Colors.blue.shade50,
+      ),
+    ),
+    onCompleted: onCompleted,
+    //androidSmsAutofillMethod: AndroidSmsAutofillMethod.smsRetrieverApi,
+    autofillHints: const [AutofillHints.oneTimeCode],
+    keyboardType: TextInputType.number,
+    //animationType: AnimationType.scale,
+    showCursor: true,
+  );
+}
+
+Widget bouttonValidationOTP(
+  Function setStating,
+  BuildContext context,
+  GlobalKey<FormState> cleForm,
+) {
+  return SizedBox(
+    width: double.infinity, // prend toute la largeur disponible
+    child: ElevatedButton(
+      onPressed: () {},
+      style: ElevatedButton.styleFrom(
+        elevation: 0, // pas d’ombre
+        backgroundColor: Color(0xffBE4A00), // ou toute autre couleur sauf rouge
+        foregroundColor: Colors.white, // couleur du texte/icône
+        padding: EdgeInsets.symmetric(vertical: 16), // hauteur du bouton
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10), // coins arrondis optionnels
+        ),
+      ),
+      child: Text("Vérifier le code"),
+    ),
+  );
+}
+
+//Widget de confirmation de mail----------------------------------------------------------------
+//----------------------------------------------------------------------------------------------
+
+Widget bodyPageConfirmationEmail(Function setStating, BuildContext context) {
+  return SingleChildScrollView(
+    padding: EdgeInsets.symmetric(horizontal: 35),
+    child: Center(
+      child: Form(
+        key: _formKeyOTPVerification,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Image.asset("assets/images/band3.PNG", height: 200),
+            SizedBox(height: 16),
+            SizedBox(
+              child: Text(
+                "Confirmeation  mail !",
+                style: TextStyle(fontSize: 35),
+              ),
+            ),
+            SizedBox(height: 25),
+            SizedBox(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    "Un lien de vérification a été envoyé à votre adresse e-mail.",
+                  ),
+                  Text("Veuillez cliquer dessus"),
+                  Text("puis revenir ici et appuyer sur le bouton ci-dessous."),
+                  SizedBox(height: 20),
+                  Text(_emailPhoneConnectionController.text),
+                ],
+              ),
+            ),
+
+            SizedBox(height: 20),
+
+            SizedBox(height: 20),
+            bouttonValidationEmail(setStating, context),
+            SizedBox(height: 6),
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text("Vous n'avez pas reussi le mail? "),
+                TextButton(
+                  onPressed: () {},
+                  child: Text(
+                    "Cliquez ici dans 60 s",
+                    style: TextStyle(
+                      color: Color(0xffBE4A00),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+Widget bouttonValidationEmail(Function setStating, BuildContext context) {
+  return SizedBox(
+    width: double.infinity, // prend toute la largeur disponible
+    child: ElevatedButton(
+      onPressed: () async {
+        try {
+          await AuthFirebase().loginWithEmailAndPassword(
+            _emailPhoneConnectionController.text,
+            _motDePasseConfirmationController.text,
+          );
+
+          if (!AuthFirebase().currentUser!.emailVerified) {
+            AuthFirebase().logout();
+            messageErreurBar(
+              context,
+              messageErr: "Le mail n'a pas été vérifié !",
+            );
+          } else {
+            _indexPage = 0;
+          }
+        } on FirebaseAuthException catch (e) {
+          print(e);
+        }
+      },
+      style: ElevatedButton.styleFrom(
+        elevation: 0, // pas d’ombre
+        backgroundColor: Color(0xffBE4A00), // ou toute autre couleur sauf rouge
+        foregroundColor: Colors.white, // couleur du texte/icône
+        padding: EdgeInsets.symmetric(vertical: 16), // hauteur du bouton
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10), // coins arrondis optionnels
+        ),
+      ),
+      child: Text("J’ai vérifié mon e-mail"),
+    ),
   );
 }
