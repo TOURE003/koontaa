@@ -271,6 +271,7 @@ Widget bouttonValidationCreerCompte(
                   await AuthFirebase().envoyerCodeSMS(
                     numeroAjuste,
                     () {
+                      loadingBouttonCreation = false;
                       _indexPage = 2;
                       setStating();
                     },
@@ -794,7 +795,7 @@ Widget bodyPageConfirmationOTP(Function setStating, BuildContext context) {
             ),
 
             SizedBox(height: 20),
-            buildOtpField(context),
+            buildOtpField(context, setStating),
 
             SizedBox(height: 20),
             bouttonValidationOTP(setStating, context, _formKeyConnection),
@@ -829,7 +830,7 @@ Widget bodyPageConfirmationOTP(Function setStating, BuildContext context) {
 final TextEditingController _verificationOTPController =
     TextEditingController();
 bool loadingBouttonOTP = false;
-Widget buildOtpField(BuildContext context) {
+Widget buildOtpField(BuildContext context, Function setStating) {
   final defaultPinTheme = PinTheme(
     width: 56,
     height: 56,
@@ -863,25 +864,7 @@ Widget buildOtpField(BuildContext context) {
     onCompleted: loadingBouttonOTP
         ? null
         : (value) async {
-            String mailFactis =
-                "${_emailPhoneConnectionController.text.replaceAll("+225", "")}@koontaa.com";
-            await AuthFirebase().verifierCodeOTP(
-              value,
-              () async {
-                await AuthFirebase().logout(decon: false);
-                await AuthFirebase().createUserWithPassword(
-                  mailFactis,
-                  _motDePasseConfirmationController.text,
-                  () {
-                    _indexPage = 0;
-                  },
-                  () {},
-                );
-              },
-              (e) {
-                messageErreurBar(context, messageErr: e);
-              },
-            );
+            verificationOTP(context, value, setStating);
           },
     //androidSmsAutofillMethod: AndroidSmsAutofillMethod.smsRetrieverApi,
     autofillHints: const [AutofillHints.oneTimeCode],
@@ -899,7 +882,15 @@ Widget bouttonValidationOTP(
   return SizedBox(
     width: double.infinity, // prend toute la largeur disponible
     child: ElevatedButton(
-      onPressed: () {},
+      onPressed: loadingBouttonOTP
+          ? null
+          : () {
+              verificationOTP(
+                context,
+                _verificationOTPController.text,
+                setStating,
+              );
+            },
       style: ElevatedButton.styleFrom(
         elevation: 0, // pas d’ombre
         backgroundColor: Color(0xffBE4A00), // ou toute autre couleur sauf rouge
@@ -909,12 +900,16 @@ Widget bouttonValidationOTP(
           borderRadius: BorderRadius.circular(10), // coins arrondis optionnels
         ),
       ),
-      child: Text("Vérifier le code"),
+      child: loadingBouttonOTP
+          ? circular(message: "Vérification..")
+          : Text("Vérifier le code"),
     ),
   );
 }
 
-void verificationOTP(BuildContext context, value) async {
+void verificationOTP(BuildContext context, value, Function setStating) async {
+  loadingBouttonOTP = true;
+  setStating();
   String mailFactis =
       "${_emailPhoneConnectionController.text.replaceAll("+225", "")}@koontaa.com";
   await AuthFirebase().verifierCodeOTP(
@@ -925,13 +920,22 @@ void verificationOTP(BuildContext context, value) async {
         mailFactis,
         _motDePasseConfirmationController.text,
         () {
+          loadingBouttonOTP = true;
           _indexPage = 0;
+          setStating();
         },
         () {},
       );
     },
     (e) {
-      messageErreurBar(context, messageErr: e);
+      loadingBouttonOTP = false;
+      setStating();
+      String message = "Le code ne correspond pas";
+      if (e == "network-request-failed") {
+        message = "Vérifiez votre connection internet";
+      }
+
+      messageErreurBar(context, messageErr: message);
     },
   );
 }

@@ -53,7 +53,9 @@ class AuthFirebase {
       //await logout();
       fonctionSucces();
     } catch (e) {
-      fonctionErr(e);
+      try {
+        fonctionErr(e);
+      } catch (e) {}
       //throw Exception("Échec de création du compte : ${e.toString()}");
     }
   }
