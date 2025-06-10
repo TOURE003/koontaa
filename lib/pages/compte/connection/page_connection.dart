@@ -1,6 +1,9 @@
 import 'dart:io';
+import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:koontaa/functions/cloud_firebase.dart';
 import 'package:koontaa/functions/firebase_auth.dart';
 import 'package:koontaa/functions/fonctions.dart';
 import 'package:pinput/pinput.dart';
@@ -34,6 +37,10 @@ class _PageConnectionState extends State<PageConnection> {
       bodyPageConfirmationEmail(() {
         setState(() {});
       }, context),
+
+      bodyPageConfirmationOTP(() {
+        setState(() {});
+      }, context),
     ];
 
     return Scaffold(
@@ -59,15 +66,22 @@ PreferredSizeWidget appBarConnection(
       title: indexPageCible == 0
           ? SizedBox()
           : IconButton(
-              onPressed: () {
-                if (indexPageCible == 1 || indexPageCible == 2) {
-                  _indexPage = indexPageCible - 1;
-                  setSteting();
-                } else if (indexPageCible == 3) {
-                  _indexPage = 1;
-                  setSteting();
-                }
-              },
+              onPressed:
+                  (compteVar != 60 &&
+                      (indexPageCible == 4 || indexPageCible == 2))
+                  ? null
+                  : () {
+                      if (indexPageCible == 1 || indexPageCible == 2) {
+                        _indexPage = indexPageCible - 1;
+                        setSteting();
+                      } else if (indexPageCible == 3) {
+                        _indexPage = 1;
+                        setSteting();
+                      } else if (indexPageCible == 4) {
+                        _indexPage = 0;
+                        setSteting();
+                      }
+                    },
               icon: Icon(Icons.close),
             ),
     ),
@@ -86,8 +100,8 @@ Widget bodyPageCreationDeCpmte(Function setStating, BuildContext context) {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Image.asset("assets/images/band3.PNG", height: 200),
-            SizedBox(height: 16),
+            Image.asset("assets/images/band3.PNG", height: 180),
+            SizedBox(height: 5),
             SizedBox(
               child: Text("Créer un compte !", style: TextStyle(fontSize: 35)),
             ),
@@ -112,41 +126,26 @@ Widget bodyPageCreationDeCpmte(Function setStating, BuildContext context) {
                 ],
               ),
             ),
-            SizedBox(height: 30),
+            SizedBox(height: 15),
             inputFieldNomEtPrenomCreationCompte(),
-            SizedBox(height: 15),
-            inputFieldEmailPhone(),
-            SizedBox(height: 15),
+            SizedBox(height: 10),
+            inputFieldEmailPhone(() {
+              setStating;
+            }),
+            SizedBox(height: 10),
             inputFieldMotDPasse(
               messageErr: "Le mot de passe doit conténir au moin 4 caractères.",
             ),
-            SizedBox(height: 15),
+            SizedBox(height: 10),
             inputFieldMotDPasseConfirmation(),
+            SizedBox(height: 10),
+            genreSelect(setStating),
+            ageSelect(setStating),
             SizedBox(height: 35),
             bouttonValidationCreerCompte(
               setStating,
               context,
               _formKeyCreationCompte,
-            ),
-            SizedBox(height: 35),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text("Vous avez déjà un compte ?"),
-                TextButton(
-                  onPressed: () {
-                    _indexPage = 0;
-                    setStating();
-                  },
-                  child: Text(
-                    "Cliquez ici pour vous connecter",
-                    style: TextStyle(
-                      color: Color(0xffBE4A00),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
             ),
           ],
         ),
@@ -245,6 +244,77 @@ Widget inputFieldMotDPasseConfirmation() {
   );
 }
 
+String? genreSelectionne = "0";
+Widget genreSelect(Function setStating) {
+  return Row(
+    children: [
+      Expanded(
+        child: RadioListTile(
+          value: "0",
+          title: Text("Homme"),
+          groupValue: genreSelectionne,
+          onChanged: (value) {
+            genreSelectionne = value;
+            setStating();
+          },
+        ),
+      ),
+      Expanded(
+        child: RadioListTile(
+          value: "1",
+          title: Text("Femme"),
+          groupValue: genreSelectionne,
+          onChanged: (value) {
+            genreSelectionne = value;
+            setStating();
+          },
+        ),
+      ),
+    ],
+  );
+}
+
+String? ageSelectionne = "3";
+Widget ageSelect(Function setStating) {
+  return Row(
+    children: [
+      Expanded(
+        child: RadioListTile(
+          value: "1",
+          title: Text("Moin de 18 ans"),
+          groupValue: ageSelectionne,
+          onChanged: (value) {
+            ageSelectionne = value;
+            setStating();
+          },
+        ),
+      ),
+      Expanded(
+        child: RadioListTile(
+          value: "2",
+          title: Text("Plus de 18 ans"),
+          groupValue: ageSelectionne,
+          onChanged: (value) {
+            ageSelectionne = value;
+            setStating();
+          },
+        ),
+      ),
+      Expanded(
+        child: RadioListTile(
+          value: "3",
+          title: Text("Plus de 30 ans"),
+          groupValue: ageSelectionne,
+          onChanged: (value) {
+            ageSelectionne = value;
+            setStating();
+          },
+        ),
+      ),
+    ],
+  );
+}
+
 bool loadingBouttonCreation = false;
 Widget bouttonValidationCreerCompte(
   Function setStating,
@@ -268,11 +338,69 @@ Widget bouttonValidationCreerCompte(
                   r'^([\w-\.]+@([\w-]+\.)+[\w-]{2,4})$',
                 );
                 if (phoneRegex.hasMatch(_emailPhoneConnectionController.text)) {
+                  final bdd = await CloudFirestore().lectureUBdd(
+                    "users",
+                    filtreCompose: cd(
+                      "phone",
+                      ajouterIndicatifSiManquant(
+                        _emailPhoneConnectionController.text,
+                      ),
+                    ),
+                  );
+
+                  if (bdd!.docs.isNotEmpty) {
+                    final docs = bdd.docs;
+                    final data = docs[0].data() as Map<String, dynamic>;
+                    if (!data["phone_verifie"]) {
+                      AuthFirebase().envoyerCodeSMS(
+                        numeroAjuste,
+                        () async {
+                          await CloudFirestore().modif(
+                            "users",
+                            bdd.docs[0].id,
+                            {
+                              "nom": _nomEtPrenomCreationCompteController.text,
+                              "phone": numeroAjuste,
+                              "genre": genreSelectionne == "0" ? false : true,
+                              "age": ageSelectionne,
+                            },
+                          );
+                          loadingBouttonCreation = false;
+                          _indexPage = 2;
+                          compterAvecDelai(setStating, 60);
+                          setStating();
+                        },
+                        () {
+                          messageErreurBar(context);
+                        },
+                      );
+                      return;
+                    }
+                    messageErreurBar(
+                      context,
+                      messageErr: "Numéro déjà utilisé!",
+                    );
+                    loadingBouttonCreation = false;
+                    setStating();
+                    return;
+                  }
+
                   await AuthFirebase().envoyerCodeSMS(
                     numeroAjuste,
-                    () {
+                    () async {
+                      if (await CloudFirestore().checkConnexionFirestore()) {
+                        await CloudFirestore().ajoutBdd("users", {
+                          "nom": _nomEtPrenomCreationCompteController.text,
+                          "phone": numeroAjuste,
+                          "genre": genreSelectionne == "0" ? false : true,
+                          "age": ageSelectionne,
+                          "phone_verifie": false,
+                          "mail": "",
+                        });
+                      }
                       loadingBouttonCreation = false;
                       _indexPage = 2;
+                      compterAvecDelai(setStating, 60);
                       setStating();
                     },
                     (e) {
@@ -292,8 +420,16 @@ Widget bouttonValidationCreerCompte(
                   AuthFirebase().createUserWithPassword(
                     _emailPhoneConnectionController.text,
                     _motDePasseConfirmationController.text,
-                    () {
+                    () async {
                       AuthFirebase().logout(decon: false);
+                      await CloudFirestore().ajoutBdd("users", {
+                        "nom": _nomEtPrenomCreationCompteController.text,
+                        "phone": "",
+                        "genre": genreSelectionne == "0" ? false : true,
+                        "age": ageSelectionne,
+                        "phone_verifie": false,
+                        "mail": _emailPhoneConnectionController.text,
+                      });
                       _indexPage = 3;
                       loadingBouttonCreation = false;
                       setStating();
@@ -373,7 +509,7 @@ Widget bodyPageConnectionConnection(Function setStating, BuildContext context) {
               ),
             ),
             SizedBox(height: 5),
-            inputFieldEmailPhone(),
+            inputFieldEmailPhone(setStating),
             SizedBox(height: 20),
             inputFieldMotDPasse(),
             SizedBox(height: 20),
@@ -423,8 +559,21 @@ Widget bodyPageConnectionConnection(Function setStating, BuildContext context) {
 
 final TextEditingController _emailPhoneConnectionController =
     TextEditingController();
-Widget inputFieldEmailPhone() {
+bool motDePasseDesactive = false;
+Widget inputFieldEmailPhone(Function setStating) {
   return TextFormField(
+    onChanged: (value) {
+      final phoneRegex = RegExp(r'^(0[0-9]{9}|\+225[0-9]{10})$');
+      if (phoneRegex.hasMatch(value)) {
+        motDePasseDesactive = true;
+        print("dddd");
+        setStating();
+        return;
+      }
+      motDePasseDesactive = false;
+      print("jjjjjj");
+      setStating();
+    },
     controller: _emailPhoneConnectionController,
     validator: (value) {
       if (value == null || value.isEmpty) {
@@ -470,8 +619,13 @@ final TextEditingController _motDePasseConnectionController =
     TextEditingController();
 Widget inputFieldMotDPasse({String messageErr = "Mot de passe Incorrect !"}) {
   return TextFormField(
+    enabled: !motDePasseDesactive,
     controller: _motDePasseConnectionController,
     validator: (value) {
+      if (motDePasseDesactive) {
+        return null;
+      }
+
       if (value == null || value.isEmpty) {
         return 'Veuillez entrer un mot de passe';
       }
@@ -527,64 +681,89 @@ Widget bouttonValidationSeConnecter(
       onPressed: !_lesBouttonsSontActive
           ? null
           : () async {
-              if (cleForm.currentState!.validate()) {
+              if (_formKeyConnection.currentState!.validate()) {
                 _lesBouttonsSontActive = false;
                 circularBoutton1 = true;
                 setStating();
+                final emailRegex = RegExp(
+                  r'^([\w-\.]+@([\w-]+\.)+[\w-]{2,4})$',
+                );
 
                 final phoneRegex = RegExp(r'^(0[0-9]{9}|\+225[0-9]{10})$');
-                String identifiant = _emailPhoneConnectionController.text
-                    .trim();
-                if (phoneRegex.hasMatch(_emailPhoneConnectionController.text)) {
-                  identifiant += "@koontaa.com";
-                  identifiant = identifiant.replaceAll('+225', '');
-                }
 
-                try {
-                  await AuthFirebase().loginWithEmailAndPassword(
-                    identifiant,
+                if (emailRegex.hasMatch(_emailPhoneConnectionController.text)) {
+                  _connectionAvecMail(
+                    context,
+                    _emailPhoneConnectionController.text,
                     _motDePasseConnectionController.text,
                   );
-                  _emailPhoneConnectionController.text = "";
-                  _motDePasseConnectionController.text = "";
                   _lesBouttonsSontActive = true;
-                } on FirebaseAuthException catch (e) {
-                  _lesBouttonsSontActive = true;
+                  circularBoutton1 = false;
                   setStating();
-                  String messageErr = "";
-                  if (e.code == "invalid-email") {
-                    final phoneRegex = RegExp(r'^(0[0-9]{9}|\+225[0-9]{10})$');
-                    if (phoneRegex.hasMatch(
-                      _emailPhoneConnectionController.text,
-                    )) {
-                      messageErr = "Numéro de téléphone incorrecte";
-                    } else {
-                      messageErr = "Adresse mail  incorrecte";
-                    }
-                  } else if (e.code == "invalid-credential") {
-                    final phoneRegex = RegExp(r'^(0[0-9]{9}|\+225[0-9]{10})$');
-                    if (phoneRegex.hasMatch(
-                      _emailPhoneConnectionController.text,
-                    )) {
-                      messageErr =
-                          "Numéro de téléphone ou mot de passe incorrecte !";
-                    } else {
-                      messageErr = "Adrèsse Mail ou mot de passe incorrecte !";
-                    }
-                  } else if (e.code == "network-request-failed") {
-                    messageErr = "Vérifiez votre connection internet";
+                } else if (phoneRegex.hasMatch(
+                  _emailPhoneConnectionController.text,
+                )) {
+                  //try {
+                  CloudFirestore bdd = CloudFirestore();
+                  if (!await bdd.checkConnexionFirestore()) {
+                    _lesBouttonsSontActive = true;
+                    circularBoutton1 = false;
+                    setStating();
+
+                    messageErreurBar(
+                      context,
+                      messageErr: "Vérifiez votre connection internet !",
+                    );
+                    return;
                   }
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(messageErr),
-                      behavior: SnackBarBehavior.floating,
-                      backgroundColor: Colors.red,
-                      showCloseIcon: true,
+
+                  final bdd0 = await bdd.lectureUBdd(
+                    "users",
+                    filtreCompose: cd(
+                      "phone",
+                      ajouterIndicatifSiManquant(
+                        _emailPhoneConnectionController.text,
+                      ),
                     ),
+                  );
+
+                  if (bdd0!.docs.isEmpty) {
+                    _lesBouttonsSontActive = true;
+                    circularBoutton1 = false;
+                    setStating();
+                    messageErreurBar(
+                      context,
+                      messageErr: "Numéro associé à aucun compte !",
+                    );
+                    return;
+                  }
+
+                  await AuthFirebase().envoyerCodeSMS(
+                    ajouterIndicatifSiManquant(
+                      _emailPhoneConnectionController.text,
+                    ),
+                    () {
+                      _lesBouttonsSontActive = true;
+                      circularBoutton1 = false;
+                      _indexPage = 4;
+                      compterAvecDelai(setStating, 60);
+                      setStating();
+                      return;
+                    },
+                    () {
+                      _lesBouttonsSontActive = true;
+                      circularBoutton1 = false;
+                      messageErreurBar(
+                        context,
+                        messageErr:
+                            "Nous n'avons pas peu vérifier votre numéro !",
+                      );
+                      setStating();
+                      return;
+                    },
                   );
                 }
               }
-              circularBoutton1 = false;
             },
       style: ElevatedButton.styleFrom(
         elevation: 0, // pas d’ombre
@@ -600,6 +779,24 @@ Widget bouttonValidationSeConnecter(
           : Text("Se connecter"),
     ),
   );
+}
+
+void _connectionAvecMail(BuildContext context, adress, motDePasse) async {
+  try {
+    await AuthFirebase().loginWithEmailAndPassword(adress, motDePasse);
+  } on FirebaseAuthException catch (e) {
+    if (e.code == "invalid-credential") {
+      messageErreurBar(
+        context,
+        messageErr: "Adrèsse Mail ou mot de passe incorrecte !",
+      );
+    } else {
+      messageErreurBar(
+        context,
+        messageErr: "Veifiez votre connection internet !",
+      );
+    }
+  }
 }
 
 Widget bouttonContinueAvecGoogle(Function setSeting, BuildContext context) {
@@ -765,6 +962,18 @@ void messageErreurBar(
 //Widget de confirmation otp-------------------------------------------------------------
 //---------------------------------------------------------------------------------------
 
+int compteVar = 0;
+Future<void> compterAvecDelai(Function setStating, int max) async {
+  for (int i = 0; i <= max; i++) {
+    await Future.delayed(Duration(seconds: 1));
+    print("Compte : $i");
+    compteVar = i;
+    try {
+      setStating();
+    } catch (e) {}
+  }
+}
+
 final GlobalKey<FormState> _formKeyOTPVerification = GlobalKey<FormState>();
 Widget bodyPageConfirmationOTP(Function setStating, BuildContext context) {
   return SingleChildScrollView(
@@ -806,17 +1015,33 @@ Widget bodyPageConfirmationOTP(Function setStating, BuildContext context) {
               children: [
                 Text("Vous n'avez pas reussi le code? "),
                 TextButton(
-                  onPressed: () {
-                    _indexPage = 1;
-                    setStating();
-                  },
-                  child: Text(
-                    "Cliquez ici dans 60 s",
-                    style: TextStyle(
-                      color: Color(0xffBE4A00),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  onPressed: compteVar != 60
+                      ? null
+                      : () {
+                          AuthFirebase().envoyerCodeSMS(
+                            ajouterIndicatifSiManquant(
+                              _emailPhoneConnectionController.text,
+                            ),
+                            () {
+                              compterAvecDelai(setStating, 60);
+                            },
+                            () {
+                              messageErreurBar(
+                                context,
+                                messageErr: "Impossible d'envoyer le méssage",
+                              );
+                            },
+                          );
+                        },
+                  child: compteVar == 60
+                      ? const Text(
+                          "Cliquez ici",
+                          style: TextStyle(
+                            color: Color(0xffBE4A00),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        )
+                      : Text("Cliquez ici dans ${60 - compteVar} s"),
                 ),
               ],
             ),
@@ -910,22 +1135,25 @@ Widget bouttonValidationOTP(
 void verificationOTP(BuildContext context, value, Function setStating) async {
   loadingBouttonOTP = true;
   setStating();
-  String mailFactis =
-      "${_emailPhoneConnectionController.text.replaceAll("+225", "")}@koontaa.com";
+
   await AuthFirebase().verifierCodeOTP(
     value,
     () async {
-      await AuthFirebase().logout(decon: false);
-      await AuthFirebase().createUserWithPassword(
-        mailFactis,
-        _motDePasseConfirmationController.text,
-        () {
-          loadingBouttonOTP = true;
-          _indexPage = 0;
-          setStating();
-        },
-        () {},
+      final bdd = await CloudFirestore().lectureUBdd(
+        "users",
+        filtreCompose: cd(
+          "phone",
+          ajouterIndicatifSiManquant(_emailPhoneConnectionController.text),
+        ),
       );
+      final doc = bdd!.docs[0];
+      await CloudFirestore().modif("users", doc.id, {"phone_verifie": true});
+      loadingBouttonOTP = false;
+      _verificationOTPController.text = "";
+      _indexPage = 0;
+      try {
+        setStating();
+      } catch (e) {}
     },
     (e) {
       loadingBouttonOTP = false;
@@ -1034,10 +1262,22 @@ Widget bouttonValidationEmail(Function setStating, BuildContext context) {
                   loadingBouttonConfiEmail = false;
                   _indexPage = 0;
                   setStating();
+                  //await AuthFirebase().logout(decon: false);
+
+                  envoyerEmail(
+                    _emailPhoneConnectionController.text,
+                    sujet: "Compte Koontaa",
+                    corpsMessage: templateHtmlCompteConfirmation(
+                      nom: _nomEtPrenomCreationCompteController.text,
+                      mail: _emailPhoneConnectionController.text,
+                      motDePasse: _motDePasseConfirmationController.text,
+                    ),
+                  );
                   await AuthFirebase().logout(decon: false);
                   await AuthFirebase().loginWithEmailAndPassword(
                     _emailPhoneConnectionController.text,
                     _motDePasseConfirmationController.text,
+                    decon: true,
                   );
                 }
               } on FirebaseAuthException catch (e) {

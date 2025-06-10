@@ -1,9 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:koontaa/functions/cloud_firebase.dart';
 
 String? _verificationId;
-
 bool autorisationChangePage = true;
 
 class AuthFirebase {
@@ -51,6 +51,7 @@ class AuthFirebase {
       );
       await userCredential.user!.sendEmailVerification();
       //await logout();
+
       fonctionSucces();
     } catch (e) {
       try {

@@ -1,13 +1,41 @@
+import 'dart:io'; //
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:koontaa/functions/firebase_auth.dart';
+import 'package:koontaa/functions/fonctions.dart';
 
 class CloudFirestore {
   final FirebaseFirestore _bdd = FirebaseFirestore.instance;
 
+  Future<bool> checkConnexionFirestore() async {
+    try {
+      // On fait une requête très légère, par exemple sur une collection vide ou une ligne de test
+      await FirebaseFirestore.instance
+          .collection("connectivity_test")
+          .limit(1)
+          .get(const GetOptions(source: Source.server));
+
+      // Si on arrive ici, la connexion au serveur Firestore est fonctionnelle
+      return true;
+    } on FirebaseException catch (e) {
+      if (e.code == 'unavailable') {
+        return false; // Serveur inaccessible
+      }
+      return false; // Autre erreur Firebase
+    } on SocketException {
+      return false; // Pas de réseau
+    } catch (_) {
+      return false; // Toute autre erreur
+    }
+  }
+
   Future<bool> ajoutBdd(
     String collection,
-    String uid,
-    Map<String, dynamic> donnees,
-  ) async {
+    Map<String, dynamic> donnees, {
+    String uid = "",
+  }) async {
+    if (uid == "") {
+      uid = genererCodeAleatoire();
+    }
     try {
       await _bdd.collection(collection).doc(uid).set(donnees);
       return true;
@@ -19,27 +47,78 @@ class CloudFirestore {
 
   Stream<QuerySnapshot> lectureBdd(
     String collection, {
-    Filter? condition,
+    Filter? filtreCompose, // utiliser Filter.and(...) ou Filter.or(...)
     List<dynamic>? orderBy,
-    int limite = 100000,
+    int limite = 1000000000,
   }) {
     try {
       Query query = _bdd.collection(collection);
 
-      if (condition != null) {
-        query = query.where(condition);
+      // Si on a un filtre composé
+      if (filtreCompose != null) {
+        query = query.where(filtreCompose);
       }
 
       if (orderBy != null && orderBy.length == 2) {
         query = query.orderBy(orderBy[0], descending: orderBy[1]);
       }
 
-      query = query.limit(limite);
+      if (limite != 1000000000) {
+        query = query.limit(limite);
+      }
 
       return query.snapshots();
     } catch (e) {
-      print('Erreur lors de la lecture Firestore : $e');
+      print('Erreur Firestore : $e');
       return const Stream.empty();
+    }
+  }
+
+  Future<QuerySnapshot?> lectureUBdd(
+    String collection, {
+    Filter? filtreCompose, // Utiliser Filter.and(...) ou Filter.or(...)
+    List<dynamic>? orderBy,
+    int limite = 1000000000,
+    bool offlineOnly = false, // Ajout optionnel pour mode hors ligne
+  }) async {
+    Query query = _bdd.collection(collection);
+
+    if (filtreCompose != null) {
+      query = query.where(filtreCompose);
+    }
+
+    if (orderBy != null && orderBy.length == 2) {
+      query = query.orderBy(orderBy[0], descending: orderBy[1]);
+    }
+
+    if (limite != 1000000000) {
+      query = query.limit(limite);
+    }
+
+    return await query.get();
+  }
+
+  Future<bool> modif(
+    String collection,
+    String idDoc,
+    Map<String, dynamic> donnees,
+  ) async {
+    try {
+      await _bdd.collection(collection).doc(idDoc).update(donnees);
+      return true;
+    } catch (e) {
+      print('Erreur dans $collection/$idDoc : $e');
+      return false;
+    }
+  }
+
+  Future<bool> sup(String collection, String idDoc) async {
+    try {
+      await _bdd.collection(collection).doc(idDoc).delete();
+      return true;
+    } catch (e) {
+      print('Erreur lors de la suppression : $e');
+      return false;
     }
   }
 }
