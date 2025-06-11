@@ -74,14 +74,23 @@ class CloudFirestore {
     }
   }
 
-  Future<QuerySnapshot?> lectureUBdd(
+  Future<dynamic> lectureUBdd(
     String collection, {
     Filter? filtreCompose, // Utiliser Filter.and(...) ou Filter.or(...)
     List<dynamic>? orderBy,
     int limite = 1000000000,
-    bool offlineOnly = false, // Ajout optionnel pour mode hors ligne
+    bool offlineOnly = false,
+    String idDoc = "", // Ajout optionnel pour mode hors ligne
   }) async {
     Query query = _bdd.collection(collection);
+
+    if (idDoc != "") {
+      DocumentSnapshot docSnapshot = await _bdd
+          .collection(collection)
+          .doc(idDoc)
+          .get();
+      return docSnapshot.exists ? docSnapshot : null;
+    }
 
     if (filtreCompose != null) {
       query = query.where(filtreCompose);

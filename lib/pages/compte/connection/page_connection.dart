@@ -139,8 +139,8 @@ Widget bodyPageCreationDeCpmte(Function setStating, BuildContext context) {
             SizedBox(height: 10),
             inputFieldMotDPasseConfirmation(),
             SizedBox(height: 10),
-            genreSelect(setStating),
-            ageSelect(setStating),
+            //genreSelect(setStating),
+            //ageSelect(setStating),
             SizedBox(height: 35),
             bouttonValidationCreerCompte(
               setStating,
@@ -361,8 +361,7 @@ Widget bouttonValidationCreerCompte(
                             {
                               "nom": _nomEtPrenomCreationCompteController.text,
                               "phone": numeroAjuste,
-                              "genre": genreSelectionne == "0" ? false : true,
-                              "age": ageSelectionne,
+                              "motDePasse": _motDePasseConnectionController,
                             },
                           );
                           loadingBouttonCreation = false;
@@ -392,11 +391,15 @@ Widget bouttonValidationCreerCompte(
                         await CloudFirestore().ajoutBdd("users", {
                           "nom": _nomEtPrenomCreationCompteController.text,
                           "phone": numeroAjuste,
-                          "genre": genreSelectionne == "0" ? false : true,
-                          "age": ageSelectionne,
                           "phone_verifie": false,
-                          "mail": "",
+                          "motDePasse": _motDePasseConnectionController.text,
+                          "methode": "phone",
                         });
+                      } else {
+                        messageErreurBar(
+                          context,
+                          messageErr: "Pas de connection !",
+                        );
                       }
                       loadingBouttonCreation = false;
                       _indexPage = 2;
@@ -421,15 +424,17 @@ Widget bouttonValidationCreerCompte(
                     _emailPhoneConnectionController.text,
                     _motDePasseConfirmationController.text,
                     () async {
+                      await CloudFirestore().ajoutBdd(
+                        "users",
+                        uid: AuthFirebase().currentUser!.uid,
+                        {
+                          "nom": _nomEtPrenomCreationCompteController.text,
+                          "mail": _emailPhoneConnectionController.text,
+                          "motDePasse": _motDePasseConfirmationController.text,
+                          "methode": "mail",
+                        },
+                      );
                       AuthFirebase().logout(decon: false);
-                      await CloudFirestore().ajoutBdd("users", {
-                        "nom": _nomEtPrenomCreationCompteController.text,
-                        "phone": "",
-                        "genre": genreSelectionne == "0" ? false : true,
-                        "age": ageSelectionne,
-                        "phone_verifie": false,
-                        "mail": _emailPhoneConnectionController.text,
-                      });
                       _indexPage = 3;
                       loadingBouttonCreation = false;
                       setStating();
@@ -692,11 +697,31 @@ Widget bouttonValidationSeConnecter(
                 final phoneRegex = RegExp(r'^(0[0-9]{9}|\+225[0-9]{10})$');
 
                 if (emailRegex.hasMatch(_emailPhoneConnectionController.text)) {
-                  _connectionAvecMail(
+                  final etatConnection = await _connectionAvecMail(
                     context,
                     _emailPhoneConnectionController.text,
                     _motDePasseConnectionController.text,
                   );
+
+                  if (etatConnection) {
+                    if (!AuthFirebase().currentUser!.emailVerified) {
+                      _lesBouttonsSontActive = true;
+                      circularBoutton1 = false;
+                      _indexPage = 3;
+
+                      await AuthFirebase().currentUser!.sendEmailVerification();
+                      AuthFirebase().logout();
+                      setStating();
+                      return;
+                    }
+
+                    _lesBouttonsSontActive = true;
+                    circularBoutton1 = false;
+                    setStating();
+                    Navigator.pop(context);
+                    return;
+                  }
+
                   _lesBouttonsSontActive = true;
                   circularBoutton1 = false;
                   setStating();
@@ -744,6 +769,7 @@ Widget bouttonValidationSeConnecter(
                     ),
                     () {
                       _lesBouttonsSontActive = true;
+                      creationCompte = true;
                       circularBoutton1 = false;
                       _indexPage = 4;
                       compterAvecDelai(setStating, 60);
@@ -781,9 +807,10 @@ Widget bouttonValidationSeConnecter(
   );
 }
 
-void _connectionAvecMail(BuildContext context, adress, motDePasse) async {
+_connectionAvecMail(BuildContext context, adress, motDePasse) async {
   try {
     await AuthFirebase().loginWithEmailAndPassword(adress, motDePasse);
+    return true;
   } on FirebaseAuthException catch (e) {
     if (e.code == "invalid-credential") {
       messageErreurBar(
@@ -796,6 +823,7 @@ void _connectionAvecMail(BuildContext context, adress, motDePasse) async {
         messageErr: "Veifiez votre connection internet !",
       );
     }
+    return false;
   }
 }
 
@@ -811,25 +839,59 @@ Widget bouttonContinueAvecGoogle(Function setSeting, BuildContext context) {
               setSeting();
               try {
                 await AuthFirebase().signInWithGoogle();
+                User? auth = AuthFirebase().currentUser;
+
+                dynamic bdd = await CloudFirestore().lectureUBdd(
+                  "users",
+                  idDoc: auth!.uid,
+                );
+
+                if (bdd != null && bdd is DocumentSnapshot) {
+                  final data = bdd.data() as Map<String, dynamic>;
+                  final phoneRegex = RegExp(r'^(0[0-9]{9}|\+225[0-9]{10})$');
+                  Map<String, dynamic> donne;
+                  if (data.containsKey('phone')) {
+                    if (phoneRegex.hasMatch(data["phone"])) {
+                      donne = {"mail": auth.email, "nom": auth.displayName};
+                    } else {
+                      donne = {
+                        "mail": auth.email,
+                        "nom": auth.displayName,
+                        "phone": auth.phoneNumber,
+                      };
+                    }
+                  } else {
+                    donne = {
+                      "mail": auth.email,
+                      "nom": auth.displayName,
+                      "phone": auth.phoneNumber,
+                    };
+                  }
+
+                  CloudFirestore().modif("users", auth.uid, donne);
+                } else {
+                  CloudFirestore().ajoutBdd("users", uid: auth.uid, {
+                    "nom": auth.displayName,
+                    "mail": auth.email,
+                    "phone": auth.phoneNumber ?? "",
+                    "methode": "google",
+                  });
+                }
+
+                //AuthFirebase().currentUser.nam
                 _lesBouttonsSontActive = true;
-                try {
-                  setSeting();
-                } catch (e) {}
+                setSeting();
+                Navigator.pop(context);
               } catch (e) {
                 _lesBouttonsSontActive = true;
                 setSeting();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      "Erreur lors de la connexion avec Google : $e",
-                    ),
-                    behavior: SnackBarBehavior.floating,
-                    backgroundColor: Colors.red,
-                    showCloseIcon: true,
-                  ),
+                messageErreurBar(
+                  context,
+                  messageErr: "Erreur lors de la connexion avec Google : $e",
                 );
               }
               circularBoutton2 = false;
+              setSeting();
             },
       style: ElevatedButton.styleFrom(
         elevation: 0, //
@@ -885,10 +947,55 @@ Widget bouttonContinueAvecFaceBook(Function setStating, BuildContext context) {
                 circularBoutton4 = true;
                 setStating();
                 await AuthFirebase().signInWithFacebook();
+
+                User? auth = AuthFirebase().currentUser;
+
+                dynamic bdd = await CloudFirestore().lectureUBdd(
+                  "users",
+                  idDoc: auth!.uid,
+                );
+
+                if (bdd != null && bdd is DocumentSnapshot) {
+                  final data = bdd.data() as Map<String, dynamic>;
+                  final phoneRegex = RegExp(r'^(0[0-9]{9}|\+225[0-9]{10})$');
+                  final emailRegex = RegExp(r"^[\w\.-]+@[\w\.-]+\.\w+$");
+                  Map<String, dynamic> donne;
+                  if (data.containsKey('phone')) {
+                    if (phoneRegex.hasMatch(data["phone"])) {
+                      donne = {"nom": auth.displayName};
+                    } else {
+                      donne = {
+                        "nom": auth.displayName,
+                        "phone": auth.phoneNumber,
+                      };
+                    }
+                  } else {
+                    donne = {
+                      "nom": auth.displayName,
+                      "phone": auth.phoneNumber,
+                    };
+                  }
+
+                  if (data.containsKey('mail')) {
+                    if (emailRegex.hasMatch(data["mail"])) {
+                    } else {
+                      donne["mail"] = auth.email;
+                    }
+                  }
+
+                  CloudFirestore().modif("users", auth.uid, donne);
+                } else {
+                  CloudFirestore().ajoutBdd("users", uid: auth.uid, {
+                    "nom": auth.displayName,
+                    "mail": auth.email,
+                    "phone": auth.phoneNumber ?? "",
+                    "methode": "facebook",
+                  });
+                }
+
                 _lesBouttonsSontActive = true;
-                try {
-                  setStating();
-                } catch (e) {}
+                setStating();
+                Navigator.pop(context);
               } catch (e) {
                 _lesBouttonsSontActive = true;
                 setStating();
@@ -1132,6 +1239,7 @@ Widget bouttonValidationOTP(
   );
 }
 
+bool creationCompte = false;
 void verificationOTP(BuildContext context, value, Function setStating) async {
   loadingBouttonOTP = true;
   setStating();
@@ -1141,19 +1249,36 @@ void verificationOTP(BuildContext context, value, Function setStating) async {
     () async {
       final bdd = await CloudFirestore().lectureUBdd(
         "users",
-        filtreCompose: cd(
-          "phone",
-          ajouterIndicatifSiManquant(_emailPhoneConnectionController.text),
+        filtreCompose: Filter.and(
+          cd(
+            "phone",
+            ajouterIndicatifSiManquant(_emailPhoneConnectionController.text),
+          ),
+          cd("phone_verifie", false),
         ),
       );
-      final doc = bdd!.docs[0];
-      await CloudFirestore().modif("users", doc.id, {"phone_verifie": true});
+
+      if (bdd!.docs.isNotEmpty) {
+        final doc = bdd.docs[0];
+        await CloudFirestore().sup("users", doc.id);
+        await CloudFirestore()
+            .ajoutBdd("users", uid: AuthFirebase().currentUser!.uid, {
+              "nom": _nomEtPrenomCreationCompteController.text,
+              "phone": ajouterIndicatifSiManquant(
+                _emailPhoneConnectionController.text,
+              ),
+              "phone_verifie": true,
+              "motDePasse": _motDePasseConnectionController.text,
+              "methode": "phone",
+            });
+      }
+
       loadingBouttonOTP = false;
+      creationCompte = false;
       _verificationOTPController.text = "";
       _indexPage = 0;
-      try {
-        setStating();
-      } catch (e) {}
+      setStating();
+      Navigator.pop(context);
     },
     (e) {
       loadingBouttonOTP = false;
@@ -1246,7 +1371,7 @@ Widget bouttonValidationEmail(Function setStating, BuildContext context) {
                 setStating();
                 await AuthFirebase().loginWithEmailAndPassword(
                   _emailPhoneConnectionController.text,
-                  _motDePasseConfirmationController.text,
+                  _motDePasseConnectionController.text,
                   decon: false,
                 );
 
@@ -1273,12 +1398,8 @@ Widget bouttonValidationEmail(Function setStating, BuildContext context) {
                       motDePasse: _motDePasseConfirmationController.text,
                     ),
                   );
-                  await AuthFirebase().logout(decon: false);
-                  await AuthFirebase().loginWithEmailAndPassword(
-                    _emailPhoneConnectionController.text,
-                    _motDePasseConfirmationController.text,
-                    decon: true,
-                  );
+                  //await AuthFirebase().logout(decon: false);
+                  Navigator.pop(context);
                 }
               } on FirebaseAuthException catch (e) {
                 //print(e);

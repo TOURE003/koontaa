@@ -12,20 +12,21 @@ class Home extends StatefulWidget {
   State<Home> createState() => _HomeState();
 }
 
+int indexPageAcceuil = 0;
+
 class _HomeState extends State<Home> {
-  List<Widget> diffPageHomes = [expp(), expp(), expp(), pageCompte(), expp()];
-  int indexPage = 0;
   @override
   Widget build(BuildContext context) {
+    List<Widget> diffPageHomes = [expp(), expp(), expp(), pageCompte(), expp()];
     return Scaffold(
       backgroundColor: Color(0xFFF9EFE0),
-      body: diffPageHomes[indexPage],
+      body: diffPageHomes[indexPageAcceuil],
       bottomNavigationBar: homeBottomPage(context, 1, 0, () {
         setState(() {
           if (pageBottomIndex == 3 && AuthFirebase().currentUser != null) {
-            indexPage = pageBottomIndex;
+            indexPageAcceuil = pageBottomIndex;
           } else {
-            indexPage = 0;
+            indexPageAcceuil = 0;
           }
         });
       }),
