@@ -145,3 +145,103 @@ String templateHtmlCompteConfirmation({
 </body>
 </html>''';
 }
+
+String templateHtmlMotDePasseOublie({
+  String nom = "name",
+  String mail = "koontaa@",
+  String motDePasse = "pass",
+}) {
+  return '''<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bienvenue sur Koontaa !</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #F9EFE0;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            text-align: center;
+        }
+        .header {
+            background: #BE4A00;
+            color: white;
+            padding: 20px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .content {
+            padding: 20px;
+        }
+        .content p {
+            font-size: 16px;
+            line-height: 1.6;
+        }
+        .details {
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            font-size: 16px;
+            
+            color: black;
+        }
+        .button {
+            display: inline-block;
+            background-color: #BE4A00;
+            color: white;
+            padding: 12px 20px;
+            font-size: 16px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+        .button:hover {
+            background-color: #BE4A00;
+        }
+        .footer {
+            background: #f9f9f9;
+            color: #666;
+            font-size: 12px;
+            padding: 10px 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body >
+    <div class="email-container">
+        <div class="header">
+            <h1>Vos acces à Koontaa</h1>
+        </div>
+        <div class="content">
+            <p>Bonjour <strong>Mr $nom</strong>,</p>
+            <p>Voici vos informations de connexion :</p>
+            <div class="details">
+                📧 <strong>E-mail :</strong> $mail<br>
+                🔑 <strong>Mot de passe :</strong> $motDePasse
+            </div>
+            <p>Vous pouvez modifier ces information de connection. Dans l'application, dans votre compte cliquer sur l'option sécurité !</p>
+            <a class="button" href="{{confirmation_link}}">Continuer sur Koontaa</a>
+            <p>Si vous n'avez pas initié cette inscription, vous pouvez simplement ignorer ce message.</p>
+        </div>
+        <div class="footer">
+            <p>&copy; 2025 Koontaa | Tous droits réservés.</p>
+            <p>Merci de faire confiance à **Koontaa** ! 🚀</p>
+        </div>
+    </div>
+</body>
+</html>''';
+}

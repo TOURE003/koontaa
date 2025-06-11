@@ -41,6 +41,10 @@ class _PageConnectionState extends State<PageConnection> {
       bodyPageConfirmationOTP(() {
         setState(() {});
       }, context),
+
+      bodyPageMotDePasseOUblie(() {
+        setState(() {});
+      }, context),
     ];
 
     return Scaffold(
@@ -68,10 +72,14 @@ PreferredSizeWidget appBarConnection(
           : IconButton(
               onPressed:
                   (compteVar != 60 &&
-                      (indexPageCible == 4 || indexPageCible == 2))
+                      (indexPageCible == 4 ||
+                          indexPageCible == 2 ||
+                          indexPageCible == 3))
                   ? null
                   : () {
-                      if (indexPageCible == 1 || indexPageCible == 2) {
+                      _indexPage = 0;
+                      setSteting();
+                      /*if (indexPageCible == 1 || indexPageCible == 2) {
                         _indexPage = indexPageCible - 1;
                         setSteting();
                       } else if (indexPageCible == 3) {
@@ -80,7 +88,7 @@ PreferredSizeWidget appBarConnection(
                       } else if (indexPageCible == 4) {
                         _indexPage = 0;
                         setSteting();
-                      }
+                      }*/
                     },
               icon: Icon(Icons.close),
             ),
@@ -100,7 +108,7 @@ Widget bodyPageCreationDeCpmte(Function setStating, BuildContext context) {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Image.asset("assets/images/band3.PNG", height: 180),
+            Image.asset("assets/images/band3.PNG", height: 210),
             SizedBox(height: 5),
             SizedBox(
               child: Text("Créer un compte !", style: TextStyle(fontSize: 35)),
@@ -128,15 +136,15 @@ Widget bodyPageCreationDeCpmte(Function setStating, BuildContext context) {
             ),
             SizedBox(height: 15),
             inputFieldNomEtPrenomCreationCompte(),
-            SizedBox(height: 10),
+            SizedBox(height: 20),
             inputFieldEmailPhone(() {
               setStating;
             }),
-            SizedBox(height: 10),
+            SizedBox(height: 20),
             inputFieldMotDPasse(
               messageErr: "Le mot de passe doit conténir au moin 4 caractères.",
             ),
-            SizedBox(height: 10),
+            SizedBox(height: 20),
             inputFieldMotDPasseConfirmation(),
             SizedBox(height: 10),
             //genreSelect(setStating),
@@ -437,6 +445,7 @@ Widget bouttonValidationCreerCompte(
                       AuthFirebase().logout(decon: false);
                       _indexPage = 3;
                       loadingBouttonCreation = false;
+                      compterAvecDelai(setStating, 60);
                       setStating();
                     },
                     (e) {
@@ -525,7 +534,10 @@ Widget bodyPageConnectionConnection(Function setStating, BuildContext context) {
             ),
             SizedBox(height: 6),
             TextButton(
-              onPressed: () {},
+              onPressed: () {
+                _indexPage = 5;
+                setStating();
+              },
               child: const Text(
                 "Mot de passe oublié ?",
                 style: TextStyle(fontSize: 16, color: Colors.black),
@@ -565,18 +577,21 @@ Widget bodyPageConnectionConnection(Function setStating, BuildContext context) {
 final TextEditingController _emailPhoneConnectionController =
     TextEditingController();
 bool motDePasseDesactive = false;
-Widget inputFieldEmailPhone(Function setStating) {
+Widget inputFieldEmailPhone(
+  Function setStating, {
+  String hiden = "Téléphone ou Adresse Mail! ",
+}) {
   return TextFormField(
     onChanged: (value) {
       final phoneRegex = RegExp(r'^(0[0-9]{9}|\+225[0-9]{10})$');
       if (phoneRegex.hasMatch(value)) {
         motDePasseDesactive = true;
-        print("dddd");
+
         setStating();
         return;
       }
       motDePasseDesactive = false;
-      print("jjjjjj");
+
       setStating();
     },
     controller: _emailPhoneConnectionController,
@@ -612,7 +627,7 @@ Widget inputFieldEmailPhone(Function setStating) {
       ),
       filled: true,
       fillColor: Colors.white,
-      label: Text("Adresse Mail ou Téléphone", style: TextStyle(fontSize: 20)),
+      label: Text(hiden, style: TextStyle(fontSize: 20)),
       border: OutlineInputBorder(
         borderRadius: const BorderRadius.all(Radius.circular(15)),
       ),
@@ -711,6 +726,7 @@ Widget bouttonValidationSeConnecter(
 
                       await AuthFirebase().currentUser!.sendEmailVerification();
                       AuthFirebase().logout();
+                      compterAvecDelai(setStating, 60);
                       setStating();
                       return;
                     }
@@ -1056,12 +1072,13 @@ Widget circular({String message = "Connexion..."}) {
 void messageErreurBar(
   BuildContext context, {
   String messageErr = "Une erreur s'est produit",
+  Color couleur = Colors.red,
 }) {
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
       content: Text(messageErr),
       behavior: SnackBarBehavior.floating,
-      backgroundColor: Colors.red,
+      backgroundColor: couleur,
       showCloseIcon: true,
     ),
   );
@@ -1069,7 +1086,7 @@ void messageErreurBar(
 //Widget de confirmation otp-------------------------------------------------------------
 //---------------------------------------------------------------------------------------
 
-int compteVar = 0;
+int compteVar = 60;
 Future<void> compterAvecDelai(Function setStating, int max) async {
   for (int i = 0; i <= max; i++) {
     await Future.delayed(Duration(seconds: 1));
@@ -1340,14 +1357,40 @@ Widget bodyPageConfirmationEmail(Function setStating, BuildContext context) {
               children: [
                 Text("Vous n'avez pas reussi le mail? "),
                 TextButton(
-                  onPressed: () {},
-                  child: Text(
-                    "Cliquez ici dans 60 s",
-                    style: TextStyle(
-                      color: Color(0xffBE4A00),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  onPressed: compteVar != 60
+                      ? null
+                      : () async {
+                          try {
+                            final etatConnection = await _connectionAvecMail(
+                              context,
+                              _emailPhoneConnectionController.text,
+                              _motDePasseConnectionController.text,
+                            );
+
+                            if (etatConnection) {
+                              await AuthFirebase().currentUser!
+                                  .sendEmailVerification();
+                              AuthFirebase().logout();
+                              compterAvecDelai(setStating, 60);
+                            } else {
+                              messageErreurBar(
+                                context,
+                                messageErr: "Impossible d'envoyer le mail !",
+                              );
+                            }
+                          } on FirebaseAuthException catch (e) {
+                            messageErreurBar(context, messageErr: e.code);
+                          }
+                        },
+                  child: compteVar == 60
+                      ? const Text("Cliquez ici")
+                      : Text(
+                          "Cliquez ici dans ${60 - compteVar} s",
+                          style: TextStyle(
+                            color: Color(0xffBE4A00),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 ),
               ],
             ),
@@ -1442,4 +1485,167 @@ String ajouterIndicatifSiManquant(String numero) {
 
   // Ajouter l’indicatif
   return "+225$numero";
+}
+
+//Widget mot de passe oublier--------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------------------------
+
+final GlobalKey<FormState> _formKeyMotDePasseOublie = GlobalKey<FormState>();
+Widget bodyPageMotDePasseOUblie(Function setStating, BuildContext context) {
+  return SingleChildScrollView(
+    padding: EdgeInsets.symmetric(horizontal: 35),
+    child: Center(
+      child: Form(
+        key: _formKeyMotDePasseOublie,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Image.asset("assets/images/band3.PNG", height: 200),
+            SizedBox(height: 30),
+            SizedBox(
+              child: Text(
+                "Mot de passe oublié !",
+                style: TextStyle(fontSize: 35),
+              ),
+            ),
+            SizedBox(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text("Si vous n'avez pas de compte "),
+                  TextButton(
+                    onPressed: () {
+                      _indexPage = 1;
+                      setStating();
+                    },
+                    child: Text(
+                      "Cliquez ici pour créer un compte",
+                      style: TextStyle(
+                        color: Color(0xffBE4A00),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 25),
+            inputFieldEmailPhone(setStating, hiden: "Adresse Mail"),
+            SizedBox(height: 35),
+            //inputFieldMotDPasse(),
+            Text(
+              "Nous vous enverrons un email avec vos informations d'accès à l'adresse que vous allez saisir.",
+              style: TextStyle(fontSize: 16, color: Colors.black87),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 35),
+            bouttonMotDePasseOublie(setStating, context, _formKeyConnection),
+            SizedBox(height: 20),
+            !(mailEnvoye)
+                ? SizedBox()
+                : Text(
+                    "Un email contenant vos informations d'accès vous a été envoyé. "
+                    "Si vous ne le trouvez pas dans votre boîte de réception, pensez à vérifier vos courriers indésirables (spam).",
+                    style: TextStyle(fontSize: 16, color: Colors.black87),
+                    textAlign: TextAlign.center,
+                  ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+bool _isloadingMotDePasseOublie = false;
+bool mailEnvoye = false;
+Widget bouttonMotDePasseOublie(
+  Function setStating,
+  BuildContext context,
+  GlobalKey<FormState> cleForm,
+) {
+  return SizedBox(
+    width: double.infinity, // prend toute la largeur disponible
+    child: ElevatedButton(
+      onPressed: (_isloadingMotDePasseOublie || compteVar != 60)
+          ? null
+          : () async {
+              if (_formKeyMotDePasseOublie.currentState!.validate()) {
+                _isloadingMotDePasseOublie = true;
+                setStating();
+                if (!await CloudFirestore().checkConnexionFirestore()) {
+                  messageErreurBar(
+                    context,
+                    messageErr: "Vérifiez votre connection internet!",
+                  );
+                  _isloadingMotDePasseOublie = false;
+                  setStating();
+                  return;
+                }
+
+                try {
+                  final bdd = await CloudFirestore().lectureUBdd(
+                    "users",
+                    filtreCompose: Filter.and(
+                      cd("mail", _emailPhoneConnectionController.text),
+                      cd("methode", "mail"),
+                    ),
+                  );
+
+                  if (bdd != null && bdd.docs.isNotEmpty) {
+                    final doc = bdd.docs;
+                    final donne = doc[0].data() as Map<String, dynamic>;
+                    envoyerEmail(
+                      _emailPhoneConnectionController.text,
+                      sujet: "Acces Koontaa",
+                      corpsMessage: templateHtmlMotDePasseOublie(
+                        nom: donne["nom"],
+                        mail: _emailPhoneConnectionController.text,
+                        motDePasse: donne["motDePasse"],
+                      ),
+                    );
+
+                    _isloadingMotDePasseOublie = false;
+                    mailEnvoye = true;
+                    setStating();
+                    messageErreurBar(
+                      context,
+                      messageErr:
+                          "Vos acces ont été envoyer! Verifier votre boite mail.",
+                      couleur: Colors.green,
+                    );
+
+                    compterAvecDelai(setStating, 60);
+                  } else {
+                    _isloadingMotDePasseOublie = false;
+                    setStating();
+                    messageErreurBar(
+                      context,
+                      messageErr: "Aucun compte ne correspond à ce mail !",
+                    );
+                  }
+                } catch (e) {
+                  messageErreurBar(
+                    context,
+                    messageErr: "Une erreur s'est produit!",
+                  );
+                }
+              }
+            },
+      style: ElevatedButton.styleFrom(
+        elevation: 0, // pas d’ombre
+        backgroundColor: Color(0xffBE4A00), // ou toute autre couleur sauf rouge
+        foregroundColor: Colors.white, // couleur du texte/icône
+        padding: EdgeInsets.symmetric(vertical: 16), // hauteur du bouton
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10), // coins arrondis optionnels
+        ),
+      ),
+      child: compteVar != 60
+          ? Text("réessayez dans ${60 - compteVar}")
+          : (_isloadingMotDePasseOublie
+                ? circular(message: "Envoie...")
+                : Text("M'envoyer mon mot de passe !")),
+    ),
+  );
 }
