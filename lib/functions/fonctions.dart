@@ -5,7 +5,10 @@ import 'package:mailer/mailer.dart';
 import 'package:mailer/smtp_server.dart';
 
 void changePage(BuildContext context, Widget page) {
-  Navigator.push(context, MaterialPageRoute(builder: (context) => page));
+  try {
+    //Navigator.push(context, MaterialPageRoute(builder: (context) => page));
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
+  } catch (e) {}
 }
 
 Color couleurDeApp() {

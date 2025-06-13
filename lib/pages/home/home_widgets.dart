@@ -1,5 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:koontaa/functions/firebase_auth.dart';
+import 'package:koontaa/functions/storage.dart';
 import 'package:koontaa/pages/compte/connection/page_connection.dart';
 import 'package:koontaa/pages/recherche/recherche.dart';
 import 'package:koontaa/functions/fonctions.dart';
@@ -170,7 +174,8 @@ List<Widget> tablWid(int nbr) {
   return tbl;
 }
 
-Widget expp() {
+String lienImage = "0";
+Widget expp(Function setStating) {
   return CustomScrollView(
     slivers: [
       SliverAppBar(
@@ -223,6 +228,16 @@ Widget expp() {
                     const SizedBox(height: 0),
                     rechercheFactis(context),
                     Image.asset('assets/images/band2.PNG', width: 550),
+                    ElevatedButton(
+                      onPressed: () async {
+                        final image = await imageUser(camera: false);
+                        final lien = await uploadToImageKit(image["image"]);
+                        lienImage = lien;
+                        setStating();
+                        messageErreurBar(context, messageErr: lien);
+                      },
+                      child: Text("data"),
+                    ),
                   ],
                 ),
               ),
@@ -231,10 +246,13 @@ Widget expp() {
         ),
       ),
       SliverList(
-        delegate: SliverChildBuilderDelegate(
-          childCount: 30,
-          (context, index) => ListTile(title: Text('Élément ${index + 1}')),
-        ),
+        delegate: SliverChildBuilderDelegate(childCount: 1, (context, index) {
+          return !(lienImage != "annule-file" &&
+                  lienImage != "err-file" &&
+                  lienImage != "0")
+              ? Text("pas d'image")
+              : Image.network(lienImage);
+        }),
       ),
     ],
   );

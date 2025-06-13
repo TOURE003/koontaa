@@ -1,4 +1,6 @@
-import 'dart:io';
+//import 'dart:io';
+import 'package:flutter/foundation.dart'
+    show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -927,7 +929,7 @@ Widget bouttonContinueAvecGoogle(Function setSeting, BuildContext context) {
 }
 
 Widget bouttonContinueAvecApple(Function setStating, BuildContext context) {
-  return Platform.isIOS
+  return (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS)
       ? SizedBox(
           width: double.infinity,
           child: ElevatedButton.icon(

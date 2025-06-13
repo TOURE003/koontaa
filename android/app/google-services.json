@@ -12,7 +12,20 @@
           "package_name": "com.example.koontaa"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "655454790901-rnn76hcg0ciq10u6ic92otn4ds2gfc3k.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.koontaa",
+            "certificate_hash": "d3800bb3591359fc6e4c35f2d711f50fb61064c5"
+          }
+        },
+        {
+          "client_id": "655454790901-fki9rcgblgmge47aeh7083k9jbntll7q.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyCYKOVjgO1-jC0P6GQ1-Dn1U6AxWtPhyGs"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "655454790901-fki9rcgblgmge47aeh7083k9jbntll7q.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "655454790901-o4upr0pj1lu3hgi7lksctj01vkncggjh.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.koontaa"
+              }
+            }
+          ]
         }
       }
     }

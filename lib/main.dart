@@ -1,5 +1,11 @@
 //import 'dart:nativewrappers/_internal/vm/lib/math_patch.dart';
 
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
+
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:koontaa/functions/cloud_firebase.dart';
@@ -30,6 +36,7 @@ class MyApp extends StatelessWidget {
         ),
       ),
       home: const Home(title: 'Home Page'),
+      //ImageUploadPage(), //ImgurUploader(), //const Home(title: 'Home Page'),
     );
   }
 }
@@ -137,6 +144,143 @@ class _ExempleState extends State<Exemple> {
             child: Text("envoyer mail"),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class ImgurUploader extends StatefulWidget {
+  @override
+  _ImgurUploaderState createState() => _ImgurUploaderState();
+}
+
+class _ImgurUploaderState extends State<ImgurUploader> {
+  String? imageUrl;
+  bool uploading = false;
+
+  final String clientId = 'ea8bf1befdc570c'; // Mets ton client ID Imgur
+
+  Future<void> pickAndUploadImage() async {
+    try {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(source: ImageSource.camera);
+
+      if (pickedFile == null) return;
+
+      setState(() {
+        uploading = true;
+      });
+
+      File imageFile = File(pickedFile.path);
+      List<int> imageBytes = await imageFile.readAsBytes();
+      String base64Image = base64Encode(imageBytes);
+
+      var response = await http.post(
+        Uri.parse('https://api.imgur.com/3/image'),
+        headers: {'Authorization': 'Client-ID $clientId'},
+        body: {'image': base64Image, 'type': 'base64'},
+      );
+
+      if (response.statusCode == 200) {
+        var data = jsonDecode(response.body);
+        setState(() {
+          imageUrl = data['data']['link'];
+          uploading = false;
+        });
+      } else {
+        setState(() {
+          uploading = false;
+        });
+        print("errreuuu");
+      }
+    } catch (e) {}
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        ElevatedButton(
+          onPressed: uploading ? null : pickAndUploadImage,
+          child: uploading
+              ? CircularProgressIndicator()
+              : Text('Choisir et uploader une image'),
+        ),
+        SizedBox(height: 20),
+        if (imageUrl != null) Image.network(imageUrl!),
+      ],
+    );
+  }
+}
+
+class ImageUploadPage extends StatefulWidget {
+  @override
+  _ImageUploadPageState createState() => _ImageUploadPageState();
+}
+
+class _ImageUploadPageState extends State<ImageUploadPage> {
+  File? _image;
+  String? _uploadedImageUrl;
+
+  Future<void> _pickAndUploadImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile == null) return;
+
+    setState(() {
+      _image = File(pickedFile.path);
+    });
+
+    final uploadUrl = Uri.parse(
+      "https://api.cloudinary.com/v1_1/ddjkeamgh/image/upload",
+    );
+
+    final request = http.MultipartRequest('POST', uploadUrl)
+      ..fields['upload_preset'] = 'cloudinaryPresete'
+      ..files.add(await http.MultipartFile.fromPath('file', _image!.path));
+
+    final response = await request.send();
+
+    if (response.statusCode == 200) {
+      final resStr = await response.stream.bytesToString();
+      final data = jsonDecode(resStr);
+      setState(() {
+        _uploadedImageUrl = data['secure_url'];
+      });
+    } else {
+      print("Erreur Cloudinary : ${response.statusCode}");
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Uploader une image')),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            _image != null
+                ? Image.file(_image!, height: 200)
+                : Text('Aucune image sélectionnée.'),
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _pickAndUploadImage,
+              child: Text('Sélectionner et envoyer une image'),
+            ),
+            SizedBox(height: 20),
+            _uploadedImageUrl != null
+                ? Column(
+                    children: [
+                      Text('Image envoyée avec succès !'),
+                      Image.network(_uploadedImageUrl!, height: 200),
+                      SelectableText(_uploadedImageUrl!),
+                    ],
+                  )
+                : Container(),
+          ],
+        ),
       ),
     );
   }

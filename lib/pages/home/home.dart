@@ -17,7 +17,15 @@ int indexPageAcceuil = 0;
 class _HomeState extends State<Home> {
   @override
   Widget build(BuildContext context) {
-    List<Widget> diffPageHomes = [expp(), expp(), expp(), pageCompte(), expp()];
+    List<Widget> diffPageHomes = [
+      expp(() {
+        setState(() {});
+      }),
+      Text("data"),
+      Text("data"),
+      pageCompte(),
+      Text("data"),
+    ];
     return Scaffold(
       backgroundColor: Color(0xFFF9EFE0),
       body: diffPageHomes[indexPageAcceuil],
