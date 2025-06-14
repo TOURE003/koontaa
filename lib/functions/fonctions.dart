@@ -248,3 +248,11 @@ String templateHtmlMotDePasseOublie({
 </body>
 </html>''';
 }
+
+double larg(BuildContext context, {double ratio = 1}) {
+  return MediaQuery.of(context).size.width * ratio;
+}
+
+double long(BuildContext context, {double ratio = 1}) {
+  return MediaQuery.of(context).size.height * ratio;
+}

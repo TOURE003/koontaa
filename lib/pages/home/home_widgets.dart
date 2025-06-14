@@ -1,8 +1,10 @@
 import 'dart:io';
 
+import 'package:app_settings/app_settings.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:koontaa/functions/firebase_auth.dart';
+import 'package:koontaa/functions/gps.dart';
 import 'package:koontaa/functions/storage.dart';
 import 'package:koontaa/pages/compte/connection/page_connection.dart';
 import 'package:koontaa/pages/recherche/recherche.dart';
@@ -230,11 +232,50 @@ Widget expp(Function setStating) {
                     Image.asset('assets/images/band2.PNG', width: 550),
                     ElevatedButton(
                       onPressed: () async {
-                        final image = await imageUser(camera: false);
-                        final lien = await uploadToImageKit(image["image"]);
+                        /*showModalBottomSheet(
+                          context: context,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.vertical(
+                              top: Radius.circular(20),
+                            ),
+                          ),
+                          backgroundColor: Colors.white,
+                          builder: (BuildContext context) {
+                            return Container(
+                              height: 250,
+                              padding: EdgeInsets.all(16),
+                              child: Column(
+                                children: [
+                                  Text(
+                                    "Titre",
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  SizedBox(height: 10),
+                                  Text("Voici une description rapide"),
+                                  ElevatedButton(
+                                    onPressed: () => Navigator.pop(context),
+                                    child: Text("Fermer"),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        );*/
+
+                        /*final image = await imageUser(camera: false);
+                        final lien = await envoieImage(image["image"]);
                         lienImage = lien;
+                        print(lienImage);
                         setStating();
-                        messageErreurBar(context, messageErr: lien);
+                        messageErreurBar(context, messageErr: lien);*/
+
+                        String pp = await getVilleUtilisateur(
+                          await getCurrentPosition(),
+                        );
+                        print(pp);
                       },
                       child: Text("data"),
                     ),

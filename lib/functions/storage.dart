@@ -11,31 +11,55 @@ Future<Map<String, dynamic>> imageUser({bool camera = false}) async {
   return {"lien": image?.path ?? "0", "image": image};
 }
 
-Future<String> uploadImageToCloudinary(XFile? pickedFile) async {
-  //final picker = ImagePicker();
-  //final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+Future<String> envoieImage(XFile? pickedFile) async {
+  String tentative = "err-file";
 
   if (pickedFile == null) {
     return "annule-file";
   }
 
-  final file = File(pickedFile.path);
-  final uri = Uri.parse(
-    "https://api.cloudinary.com/v1_1/ddjkeamgh/image/upload",
-  );
+  tentative = await uploadImageToCloudinary(pickedFile);
+  if (tentative != "err-file") {
+    return tentative;
+  }
 
-  final request = http.MultipartRequest('POST', uri)
-    ..fields['upload_preset'] =
-        'cloudinaryPresete' // voir plus bas
-    ..files.add(await http.MultipartFile.fromPath('file', file.path));
+  tentative = await uploadImageToImgur(pickedFile);
+  if (tentative != "err-file") {
+    return tentative;
+  }
 
-  final response = await request.send();
+  return "err-file";
+}
 
-  if (response.statusCode == 200) {
-    final resStr = await response.stream.bytesToString();
-    final data = jsonDecode(resStr);
-    return data['secure_url'];
-  } else {
+Future<String> uploadImageToCloudinary(XFile? pickedFile) async {
+  //final picker = ImagePicker();
+  //final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+  try {
+    if (pickedFile == null) {
+      return "annule-file";
+    }
+
+    final file = File(pickedFile.path);
+    final uri = Uri.parse(
+      "https://api.cloudinary.com/v1_1/ddjkeamgh/image/upload",
+    );
+
+    final request = http.MultipartRequest('POST', uri)
+      ..fields['upload_preset'] =
+          'cloudinaryPresete' // voir plus bas
+      ..files.add(await http.MultipartFile.fromPath('file', file.path));
+
+    final response = await request.send();
+
+    if (response.statusCode == 200) {
+      final resStr = await response.stream.bytesToString();
+      final data = jsonDecode(resStr);
+      return data['secure_url'];
+    } else {
+      return "err-file";
+    }
+  } catch (e) {
     return "err-file";
   }
 }
@@ -81,24 +105,29 @@ Future<String> uploadToImageKit(XFile? pickedFile) async {
   final bytes = await file.readAsBytes();
   final base64Image = base64Encode(bytes);
 
-  final response = await http.post(
-    Uri.parse('https://upload.imagekit.io/api/v1/files/upload'),
-    headers: {
-      'Authorization':
-          'Basic ' +
-          base64Encode(utf8.encode('private_snfyA1Eccs9npa9CS38L/JXhISU=:')),
-      'Content-Type': 'application/json',
-    },
-    body: jsonEncode({
-      "file": base64Image,
-      "fileName": "user_uploaded_image.jpg",
-    }),
-  );
-
-  if (response.statusCode == 200) {
-    final data = jsonDecode(response.body);
-    return data['url'];
-  } else {
-    return "err-file";
+  try {
+    final response = await http.post(
+      Uri.parse('https://upload.imagekit.io/api/v1/files/upload'),
+      headers: {
+        'Authorization':
+            'Basic ' +
+            base64Encode(utf8.encode('private_snfyA1Eccs9npa9CS38L/JXhISU=:')),
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        "file": base64Image,
+        "fileName": "user_uploaded_image.jpg",
+      }),
+    );
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return data['url'];
+    } else {
+      print(response.statusCode);
+      return "err-file";
+    }
+  } catch (e) {
+    print(e.toString());
+    return e.toString(); //"err-file";
   }
 }
