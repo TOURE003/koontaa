@@ -1,14 +1,33 @@
 import 'dart:io';
+import 'package:app_settings/app_settings.dart';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'dart:convert';
 
 Future<Map<String, dynamic>> imageUser({bool camera = false}) async {
-  final pick = ImagePicker();
-  final source = camera ? ImageSource.camera : ImageSource.gallery;
-  XFile? image = await pick.pickImage(source: source);
+  try {
+    final picker = ImagePicker();
+    final source = camera ? ImageSource.camera : ImageSource.gallery;
+    final XFile? image = await picker.pickImage(source: source);
 
-  return {"lien": image?.path ?? "0", "image": image};
+    if (image == null) {
+      // L'utilisateur a annulé manuellement la sélection (pas un refus d'autorisation)
+      return {"lien": "0", "image": null, "message": "annule"};
+    }
+
+    return {"lien": image.path, "image": image, "message": "ok"};
+  } catch (e) {
+    // Vérifie si l'erreur est liée à une autorisation refusée
+    if (e.toString().contains("access_denied") ||
+        e.toString().contains("Permission")) {
+      return {"lien": "0", "image": null, "message": "autorisation"};
+    } else {
+      //print("Erreur lors de la sélection de l'image : $e");
+    }
+
+    return {"lien": "erreur", "image": null, "message": "erreur"};
+  }
 }
 
 Future<String> envoieImage(XFile? pickedFile) async {
@@ -130,4 +149,36 @@ Future<String> uploadToImageKit(XFile? pickedFile) async {
     print(e.toString());
     return e.toString(); //"err-file";
   }
+}
+
+void messageAutorisation(BuildContext context) {
+  showDialog(
+    barrierDismissible: false,
+    barrierColor: const Color.fromARGB(107, 0, 0, 0),
+    context: context,
+    // l'utilisateur ne peut pas fermer en cliquant à l'extérieur
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text("Echec"),
+        content: Text(
+          "Nous n'avons pas l'autorisation d'accéder à la camera !",
+        ),
+        actions: [
+          TextButton(
+            child: Text("Donner l'autorisation"),
+            onPressed: () async {
+              Navigator.of(context).pop();
+              await AppSettings.openAppSettings();
+            },
+          ),
+          TextButton(
+            child: Text("Annuler"),
+            onPressed: () {
+              Navigator.of(context).pop(); // ferme la modale
+            },
+          ),
+        ],
+      );
+    },
+  );
 }

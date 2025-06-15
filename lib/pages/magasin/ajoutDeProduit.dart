@@ -1,5 +1,10 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:koontaa/functions/fonctions.dart';
+import 'package:koontaa/functions/storage.dart';
+import 'package:koontaa/pages/compte/connection/page_connection.dart';
+import 'package:flutter/services.dart';
 
 class AjoutProduits extends StatefulWidget {
   const AjoutProduits({super.key, required this.title});
@@ -18,7 +23,15 @@ class _AjoutProduitsState extends State<AjoutProduits> {
       body: SingleChildScrollView(
         padding: EdgeInsets.symmetric(horizontal: 35),
         child: Center(
-          child: Form(child: Column(children: [barreDePhoto(context)])),
+          child: Form(
+            child: Column(
+              children: [
+                barreDePhoto(context, () {
+                  setState(() {});
+                }),
+              ],
+            ),
+          ),
         ),
       ),
       bottomNavigationBar: Text("data"),
@@ -26,7 +39,9 @@ class _AjoutProduitsState extends State<AjoutProduits> {
   }
 }
 
-Widget boutonPhoto(BuildContext context) {
+List<Map<String, dynamic>> tabPhoto = [];
+
+Widget boutonPhoto(BuildContext context, Function setStating) {
   return Container(
     //padding: EdgeInsetsGeometry.all(larg(context, ratio: 0.05)),
     //height: long(context, ratio: 1 / 3),
@@ -50,7 +65,19 @@ Widget boutonPhoto(BuildContext context) {
               children: [
                 //SizedBox(height: long(context, ratio: 1 / 50)),
                 IconButton(
-                  onPressed: () {},
+                  onPressed: () async {
+                    final photo = await imageUser(camera: true);
+                    if (photo["message"] == "autorisation") {
+                      messageAutorisation(context);
+                      return;
+                    } else if (photo["message"] == "erreur") {
+                      messageErreurBar(context);
+                    } else if (photo["message"] == "ok") {
+                      tabPhoto.insert(0, photo);
+                      setStating();
+                    }
+                    //messageAutorisation(context);
+                  },
                   icon: Icon(Icons.camera_alt, size: larg(context, ratio: 0.2)),
                 ),
                 const Text("Caméra"),
@@ -66,7 +93,18 @@ Widget boutonPhoto(BuildContext context) {
             Container(
               width: larg(context, ratio: 0.3),
               child: TextButton.icon(
-                onPressed: () {},
+                onPressed: () async {
+                  final photo = await imageUser(camera: false);
+                  if (photo["message"] == "autorisation") {
+                    messageAutorisation(context);
+                    return;
+                  } else if (photo["message"] == "erreur") {
+                    messageErreurBar(context);
+                  } else if (photo["message"] == "ok") {
+                    tabPhoto.insert(0, photo);
+                    setStating();
+                  }
+                },
                 icon: Icon(Icons.photo),
                 label: Text(
                   "Galérie",
@@ -91,7 +129,9 @@ Widget boutonPhoto(BuildContext context) {
             Container(
               width: larg(context, ratio: 0.3),
               child: TextButton.icon(
-                onPressed: () {},
+                onPressed: () {
+                  boiteAjoutLien(context, setStating);
+                },
                 icon: Icon(Icons.link),
                 label: Text(
                   "Lien",
@@ -120,20 +160,161 @@ Widget boutonPhoto(BuildContext context) {
   );
 }
 
-Widget barreDePhoto(BuildContext context) {
+Widget barreDePhoto(BuildContext context, Function setStating) {
   return SizedBox(
     height: long(context, ratio: 0.3),
     child: ListView(
       scrollDirection: Axis.horizontal,
       children: [
         SizedBox(width: larg(context, ratio: 0.1)),
-        boutonPhoto(context),
-        SizedBox(width: larg(context, ratio: 0.04)),
-        Image.network(
-          "https://img.freepik.com/psd-gratuit/logo-du-smartphone-isole_23-2151232010.jpg",
-        ),
+        boutonPhoto(context, setStating),
+        //SizedBox(width: larg(context, ratio: 0.04)),
+
+        //Image.network("https://img.freepik.com/psd-gratuit/logo-du-smartphone-isole_23-2151232010.jpg",),
+        ...tabPhoto.map((value) {
+          return Row(
+            children: [
+              SizedBox(width: larg(context, ratio: 0.04)),
+              imageTemporaire(context, setStating, value),
+            ],
+          );
+        }),
         //boutonPhoto(context),
       ],
     ),
+  );
+}
+
+Widget imageTemporaire(
+  BuildContext context,
+  Function setStating,
+  Map<String, dynamic> image,
+) {
+  final Image img;
+  final regex = RegExp(
+    r'^https?:\/\/.*\.(?:png|jpg|jpeg|gif|bmp|webp)$',
+    caseSensitive: false,
+  );
+
+  if (regex.hasMatch(image["lien"])) {
+    img = Image.network(image["lien"], fit: BoxFit.cover);
+  } else {
+    img = Image.file(File(image["image"].path), fit: BoxFit.cover);
+  }
+
+  return Container(
+    decoration: BoxDecoration(borderRadius: BorderRadius.circular(8)),
+    child: Stack(
+      children: [
+        ClipRRect(borderRadius: BorderRadius.circular(6), child: img),
+        Positioned(
+          top: 4,
+          left: 4,
+          child: Container(
+            decoration: BoxDecoration(
+              color: const Color.fromARGB(127, 255, 255, 255),
+              shape: BoxShape.circle,
+            ),
+            child: IconButton(
+              icon: Icon(Icons.close, size: 16),
+              //padding: EdgeInsets.zero,
+              //constraints: BoxConstraints(),
+              onPressed: () {
+                tabPhoto.removeWhere((element) => element == image);
+                setStating(); // Tu pourras définir une action ici
+              },
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+void boiteAjoutLien(BuildContext context, Function setStating) {
+  final TextEditingController lienController = TextEditingController();
+  final GlobalKey<FormState> _formKeyLien = GlobalKey<FormState>();
+
+  showDialog(
+    barrierDismissible: true,
+    barrierColor: const Color.fromARGB(107, 0, 0, 0),
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: const Text("Lien image"),
+        content: Container(
+          width: larg(context, ratio: 0.75),
+          child: Form(
+            key: _formKeyLien,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text("Collez le lien ici"),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.paste),
+                      tooltip: "Coller depuis le presse-papiers",
+                      onPressed: () async {
+                        final data = await Clipboard.getData(
+                          Clipboard.kTextPlain,
+                        );
+                        final lienColle = data?.text ?? "";
+                        lienController.text = lienColle;
+                      },
+                    ),
+                    Expanded(
+                      child: TextFormField(
+                        validator: (value) {
+                          final regex = RegExp(
+                            r'^https?:\/\/.*\.(?:png|jpg|jpeg|gif|bmp|webp)$',
+                            caseSensitive: false,
+                          );
+                          if (value == null || value.isEmpty) {
+                            return 'Veuillez entrer un lien.';
+                          }
+                          if (!regex.hasMatch(value)) {
+                            return "Lien non valide (doit finir par .jpg, .png, etc.).";
+                          }
+                          return null;
+                        },
+                        controller: lienController,
+                        decoration: const InputDecoration(
+                          hintText: "https://...",
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            child: const Text("Valider"),
+            onPressed: () {
+              if (_formKeyLien.currentState!.validate()) {
+                tabPhoto.insert(0, {
+                  "lien": lienController.text,
+                  "image": null,
+                  "message": "ok",
+                });
+                setStating();
+                Navigator.of(context).pop();
+              }
+            },
+          ),
+          TextButton(
+            child: const Text("Annuler"),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
+        ],
+      );
+    },
   );
 }
