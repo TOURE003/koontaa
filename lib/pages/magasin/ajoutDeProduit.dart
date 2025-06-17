@@ -1,6 +1,8 @@
+import 'dart:ffi';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:koontaa/functions/fonctions.dart';
 import 'package:koontaa/functions/storage.dart';
 import 'package:koontaa/pages/compte/connection/page_connection.dart';
@@ -18,36 +20,59 @@ class AjoutProduits extends StatefulWidget {
 class _AjoutProduitsState extends State<AjoutProduits> {
   @override
   Widget build(BuildContext context) {
+    prendreUneNouvellePhotoArticle(context, () {
+      setState(() {});
+    });
     return Scaffold(
-      appBar: AppBar(title: Center(child: Text("data"))),
+      backgroundColor: Color(0xFFF9EFE0),
+      appBar: AppBar(
+        backgroundColor: Color(0xFFF9EFE0),
+        title: Center(child: Text("data")),
+      ),
       body: SingleChildScrollView(
         padding: EdgeInsets.symmetric(horizontal: 35),
-        child: Center(
-          child: Form(
-            child: Column(
-              children: [
-                barreDePhoto(context, () {
-                  setState(() {});
-                }),
-              ],
-            ),
+        child: Form(
+          child: Column(
+            children: [
+              barreDePhoto(context, () {
+                setState(() {});
+              }),
+              SizedBox(height: long(context, ratio: 0.025)),
+              inputFieldnomProduitAjoutProduit(context, () {
+                setState(() {});
+              }),
+              SizedBox(height: long(context, ratio: 0.02)),
+              inputFieldPrixProduitAjoutProduit(context, () {
+                setState(() {});
+              }),
+              SizedBox(height: long(context, ratio: 0.02)),
+              listeTaillesVetements(context, () {
+                setState(() {});
+              }),
+              SizedBox(height: long(context, ratio: 0.025)),
+              listeTaillesChessure(context, () {
+                setState(() {});
+              }),
+              SizedBox(height: long(context, ratio: 0.025)),
+              boutonAjouterArticle(context, () {
+                setState(() {});
+              }),
+            ],
           ),
         ),
       ),
-      bottomNavigationBar: Text("data"),
     );
   }
 }
 
 List<Map<String, dynamic>> tabPhoto = [];
-
 Widget boutonPhoto(BuildContext context, Function setStating) {
   return Container(
     //padding: EdgeInsetsGeometry.all(larg(context, ratio: 0.05)),
     //height: long(context, ratio: 1 / 3),
     width: larg(context, ratio: 0.65),
     decoration: BoxDecoration(
-      color: const Color.fromARGB(135, 220, 184, 151),
+      color: const Color.fromARGB(66, 220, 184, 151),
       borderRadius: BorderRadius.circular(larg(context, ratio: 0.03)),
     ),
     child: Column(
@@ -78,14 +103,18 @@ Widget boutonPhoto(BuildContext context, Function setStating) {
                     }
                     //messageAutorisation(context);
                   },
-                  icon: Icon(Icons.camera_alt, size: larg(context, ratio: 0.2)),
+                  icon: Icon(
+                    Icons.camera_alt,
+                    size: larg(context, ratio: 0.2),
+                    color: Color(0xFFBE4A00),
+                  ),
                 ),
                 const Text("Caméra"),
               ],
             ),
           ),
         ),
-        SizedBox(height: long(context, ratio: 0.06)),
+        //SizedBox(height: long(context, ratio: 0.03)),
         Row(
           //crossAxisAlignment: CrossAxisAlignment.center,
           mainAxisAlignment: MainAxisAlignment.center,
@@ -160,9 +189,31 @@ Widget boutonPhoto(BuildContext context, Function setStating) {
   );
 }
 
+bool cameraAuto = false;
+Future<void> prendreUneNouvellePhotoArticle(
+  BuildContext context,
+  Function setStating,
+) async {
+  if (cameraAuto && tabPhoto.isEmpty) {
+    try {
+      final photo = await imageUser(camera: true);
+      if (photo["message"] == "autorisation") {
+        messageAutorisation(context);
+      } else if (photo["message"] == "erreur") {
+        messageErreurBar(context);
+      } else if (photo["message"] == "ok") {
+        tabPhoto.insert(0, photo);
+        setStating();
+      } else {}
+    } catch (e) {}
+  }
+  cameraAuto = false;
+  return;
+}
+
 Widget barreDePhoto(BuildContext context, Function setStating) {
   return SizedBox(
-    height: long(context, ratio: 0.3),
+    height: long(context, ratio: 0.25),
     child: ListView(
       scrollDirection: Axis.horizontal,
       children: [
@@ -182,6 +233,98 @@ Widget barreDePhoto(BuildContext context, Function setStating) {
         //boutonPhoto(context),
       ],
     ),
+  );
+}
+
+final TextEditingController _nomProduitAjoutController =
+    TextEditingController();
+Widget inputFieldnomProduitAjoutProduit(
+  BuildContext context,
+  Function setStating,
+) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        "Nom du produit",
+        style: TextStyle(fontSize: larg(context, ratio: 0.035)),
+      ),
+      TextFormField(
+        onChanged: (value) {},
+        controller: _nomProduitAjoutController,
+        validator: (value) {},
+
+        decoration: InputDecoration(
+          enabledBorder: OutlineInputBorder(
+            borderSide: BorderSide(
+              color: Colors.grey, // Couleur de la bordure
+              width: 1.0, // Épaisseur fine
+            ),
+            borderRadius: BorderRadius.circular(8), // Coins arrondis
+          ),
+
+          focusedBorder: OutlineInputBorder(
+            borderSide: BorderSide(
+              color: Color(0xFFBE4A00), // Orange Koontaa par exemple
+              width: 1.5, // Légèrement plus épaisse
+            ),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          filled: true,
+          fillColor: Colors.white,
+          //label: Text("hiden", style: TextStyle(fontSize: 20)),
+          border: OutlineInputBorder(
+            borderRadius: const BorderRadius.all(Radius.circular(15)),
+          ),
+        ),
+      ),
+    ],
+  );
+}
+
+final TextEditingController _prixProduitAjoutController =
+    TextEditingController();
+Widget inputFieldPrixProduitAjoutProduit(
+  BuildContext context,
+  Function setStating,
+) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        "Prix de vente",
+        style: TextStyle(fontSize: larg(context, ratio: 0.035)),
+      ),
+      TextFormField(
+        onChanged: (value) {},
+        controller: _prixProduitAjoutController,
+        validator: (value) {},
+
+        decoration: InputDecoration(
+          enabledBorder: OutlineInputBorder(
+            borderSide: BorderSide(
+              color: Colors.grey, // Couleur de la bordure
+              width: 1.0, // Épaisseur fine
+            ),
+            borderRadius: BorderRadius.circular(8), // Coins arrondis
+          ),
+
+          focusedBorder: OutlineInputBorder(
+            borderSide: BorderSide(
+              color: Color(0xFFBE4A00), // Orange Koontaa par exemple
+              width: 1.5, // Légèrement plus épaisse
+            ),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          filled: true,
+          fillColor: Colors.white,
+          //label: Text("hiden", style: TextStyle(fontSize: 20)),
+          border: OutlineInputBorder(
+            borderRadius: const BorderRadius.all(Radius.circular(15)),
+          ),
+        ),
+      ),
+    ],
   );
 }
 
@@ -317,4 +460,261 @@ void boiteAjoutLien(BuildContext context, Function setStating) {
       );
     },
   );
+}
+
+List listeCocherTailleVetement = [false, false, false, false, false];
+List<String> listeNomTaille = ['S', 'M', 'L', 'XL', 'XXL'];
+Widget listeTaillesVetements(BuildContext context, Function setStating) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Row(
+        children: [
+          titreTexbox(context, text: "Tailles disponibles si vêtement"),
+          SizedBox(width: larg(context, ratio: 0.01)),
+          Icon(
+            FontAwesomeIcons.shirt,
+            size: larg(context, ratio: 0.03),
+            color: Color(0x55BE4A00),
+          ),
+          SizedBox(width: larg(context, ratio: 0.01)),
+        ],
+      ),
+      Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(larg(context, ratio: 0.02)),
+          border: Border.all(
+            color: Colors.grey,
+            width: 1.0,
+            style: BorderStyle.solid,
+            strokeAlign: BorderSide.strokeAlignInside,
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            !listeCocherTailleVetement.contains(true)
+                ? Column(
+                    children: [
+                      IconButton(
+                        onPressed: () {
+                          listeCocherTailleVetement = [
+                            true,
+                            true,
+                            true,
+                            true,
+                            true,
+                          ];
+                          setStating();
+                        },
+                        icon: Icon(Icons.select_all),
+                      ),
+                      Text(
+                        "Tous",
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  )
+                : Column(
+                    children: [
+                      IconButton(
+                        onPressed: () {
+                          listeCocherTailleVetement = [
+                            false,
+                            false,
+                            false,
+                            false,
+                            false,
+                          ];
+                          setStating();
+                        },
+                        icon: Icon(Icons.close),
+                      ),
+                      Text(
+                        "Aucun",
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+            ...listeCocherTailleVetement.asMap().entries.map((entry) {
+              int key = entry.key;
+              bool valeur = entry.value;
+
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Checkbox(
+                    value: valeur,
+                    onChanged: (value) {
+                      listeCocherTailleVetement[key] = value!;
+                      setStating();
+                    },
+                  ),
+                  listeNomTaille[key] == "S"
+                      ? Icon(Icons.child_care)
+                      : Text(
+                          listeNomTaille[key],
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                ],
+              );
+            }),
+          ],
+        ),
+      ),
+    ],
+  );
+}
+
+List listeCocherPointureChessure = [false, false, false, false, false];
+List<String> listeNomPointure = ['S', '38-39', '40-41', '42-43', '44+'];
+Widget listeTaillesChessure(BuildContext context, Function setStating) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Row(
+        children: [
+          titreTexbox(context, text: "Pointures disponibles si chaussure"),
+          SizedBox(width: larg(context, ratio: 0.01)),
+          Icon(
+            FontAwesomeIcons.shoePrints,
+            size: larg(context, ratio: 0.03),
+            color: Color(0x88BE4A00),
+          ),
+        ],
+      ),
+      Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(larg(context, ratio: 0.02)),
+          border: Border.all(
+            color: Colors.grey,
+            width: 1.0,
+            style: BorderStyle.solid,
+            strokeAlign: BorderSide.strokeAlignInside,
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            !listeCocherPointureChessure.contains(true)
+                ? Column(
+                    children: [
+                      IconButton(
+                        onPressed: () {
+                          listeCocherPointureChessure = [
+                            true,
+                            true,
+                            true,
+                            true,
+                            true,
+                          ];
+                          setStating();
+                        },
+                        icon: Icon(Icons.select_all),
+                      ),
+                      Text(
+                        "Tous",
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  )
+                : Column(
+                    children: [
+                      IconButton(
+                        onPressed: () {
+                          listeCocherPointureChessure = [
+                            false,
+                            false,
+                            false,
+                            false,
+                            false,
+                          ];
+                          setStating();
+                        },
+                        icon: Icon(Icons.close),
+                      ),
+                      Text(
+                        "Aucun",
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+            ...listeCocherPointureChessure.asMap().entries.map((entry) {
+              int key = entry.key;
+              bool valeur = entry.value;
+
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Checkbox(
+                    value: valeur,
+                    onChanged: (value) {
+                      listeCocherPointureChessure[key] = value!;
+                      setStating();
+                    },
+                  ),
+                  listeNomPointure[key] == "S"
+                      ? Icon(Icons.child_care)
+                      : Text(
+                          listeNomPointure[key],
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                ],
+              );
+            }),
+          ],
+        ),
+      ),
+    ],
+  );
+}
+
+Widget boutonAjouterArticle(BuildContext context, Function setStating) {
+  return Container(
+    //margin: EdgeInsets.symmetric(horizontal: larg(context, ratio: 0.02)),
+    width: double.infinity, // Prend toute la largeur disponible
+    child: TextButton.icon(
+      onPressed: () {},
+      icon: Icon(Icons.add_box, color: Colors.white),
+      label: Text(
+        "Ajouter",
+        style: TextStyle(
+          fontSize: larg(context, ratio: 0.03),
+          color: Colors.white,
+        ),
+      ),
+      style: TextButton.styleFrom(
+        backgroundColor: Color(0xFFBE4A00), // Couleur de fond
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10), // Bords arrondis
+          // Bordure
+        ),
+        padding: EdgeInsets.symmetric(vertical: 16), // Hauteur du bouton
+      ),
+    ),
+  );
+}
+
+Widget titreTexbox(BuildContext context, {String text = "Text"}) {
+  return Text(text, style: TextStyle(fontSize: larg(context, ratio: 0.035)));
 }

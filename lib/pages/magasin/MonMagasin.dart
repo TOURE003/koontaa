@@ -304,6 +304,7 @@ Widget bouttonAjouterProduits(BuildContext context) {
     width: double.infinity, // Prend toute la largeur disponible
     child: TextButton.icon(
       onPressed: () {
+        cameraAuto = true;
         changePage(context, AjoutProduits(title: "add produits"));
       },
       icon: Icon(Icons.add, color: Colors.white),
