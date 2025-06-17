@@ -1,6 +1,7 @@
 //import 'dart:nativewrappers/_internal/vm/lib/math_patch.dart';
 
 import 'package:auto_size_text/auto_size_text.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:koontaa/functions/fonctions.dart';
 import 'package:koontaa/functions/gps.dart';
@@ -22,14 +23,14 @@ class _MonMagasinState extends State<MonMagasin> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: expp0(context, () {
+      body: pageMagasin(context, () {
         setState(() {});
       }),
     );
   }
 }
 
-Widget expp0(BuildContext context, Function setStating) {
+Widget pageMagasin(BuildContext context, Function setStating) {
   return CustomScrollView(
     slivers: [
       SliverAppBar(
@@ -86,14 +87,22 @@ Widget expp0(BuildContext context, Function setStating) {
           },
         ),
       ),
-      SliverList(
-        delegate: SliverChildBuilderDelegate(childCount: 300, (context, index) {
-          return !(lienImage != "annule-file" &&
-                  lienImage != "err-file" &&
-                  lienImage != "0")
-              ? Text("pas d'image")
-              : Image.network(lienImage);
-        }),
+      StreamBuilder(
+        stream: etaConection,
+        builder: (context, snapshot) {
+          return SliverList(
+            delegate: SliverChildBuilderDelegate(childCount: 300, (
+              context,
+              index,
+            ) {
+              return !(lienImage != "annule-file" &&
+                      lienImage != "err-file" &&
+                      lienImage != "0")
+                  ? Text("pas d'image")
+                  : Image.network(lienImage);
+            }),
+          );
+        },
       ),
     ],
   );
@@ -118,9 +127,9 @@ Widget enteteMagasinInfo(BuildContext context, Function setStating) {
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(larg(context, ratio: 1 / 50)),
-              child: Image.network(
-                "https://upload.wikimedia.org/wikipedia/fr/thumb/b/b1/Logo-BUT.svg/1024px-Logo-BUT.svg.png",
-                fit: BoxFit.cover,
+              child: imageNetwork(
+                context,
+                'https://static.vecteezy.com/system/resources/thumbnails/015/131/911/small_2x/flat-cartoon-style-shop-facade-front-view-modern-flat-storefront-or-supermarket-design-png.png',
               ),
             ),
           ),

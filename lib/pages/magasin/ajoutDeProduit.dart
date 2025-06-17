@@ -1,8 +1,11 @@
 import 'dart:ffi';
 import 'dart:io';
+import 'package:koontaa/functions/cloud_firebase.dart';
+import 'package:ntp/ntp.dart';
 
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:intl_phone_field/helpers.dart';
 import 'package:koontaa/functions/fonctions.dart';
 import 'package:koontaa/functions/storage.dart';
 import 'package:koontaa/pages/compte/connection/page_connection.dart';
@@ -16,6 +19,8 @@ class AjoutProduits extends StatefulWidget {
   @override
   State<AjoutProduits> createState() => _AjoutProduitsState();
 }
+
+final GlobalKey<FormState> _formKeyAjoutProduit = GlobalKey<FormState>();
 
 class _AjoutProduitsState extends State<AjoutProduits> {
   @override
@@ -32,6 +37,7 @@ class _AjoutProduitsState extends State<AjoutProduits> {
       body: SingleChildScrollView(
         padding: EdgeInsets.symmetric(horizontal: 35),
         child: Form(
+          key: _formKeyAjoutProduit,
           child: Column(
             children: [
               barreDePhoto(context, () {
@@ -86,7 +92,8 @@ Widget boutonPhoto(BuildContext context, Function setStating) {
           ),
           child: Center(
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 //SizedBox(height: long(context, ratio: 1 / 50)),
                 IconButton(
@@ -109,7 +116,13 @@ Widget boutonPhoto(BuildContext context, Function setStating) {
                     color: Color(0xFFBE4A00),
                   ),
                 ),
-                const Text("Caméra"),
+                Text(
+                  "Caméra",
+                  style: TextStyle(
+                    fontSize: larg(context, ratio: 0.03),
+                    color: Colors.black,
+                  ),
+                ),
               ],
             ),
           ),
@@ -134,12 +147,12 @@ Widget boutonPhoto(BuildContext context, Function setStating) {
                     setStating();
                   }
                 },
-                icon: Icon(Icons.photo),
+                icon: Icon(Icons.photo, color: Color(0xFFBE4A00)),
                 label: Text(
                   "Galérie",
                   style: TextStyle(
                     fontSize: larg(context, ratio: 0.03),
-                    //color: Colors.white,
+                    color: Colors.black,
                   ),
                 ),
                 style: TextButton.styleFrom(
@@ -161,12 +174,12 @@ Widget boutonPhoto(BuildContext context, Function setStating) {
                 onPressed: () {
                   boiteAjoutLien(context, setStating);
                 },
-                icon: Icon(Icons.link),
+                icon: Icon(Icons.link, color: Color(0xFFBE4A00)),
                 label: Text(
                   "Lien",
                   style: TextStyle(
                     fontSize: larg(context, ratio: 0.03),
-                    //color: Colors.white,
+                    color: Colors.black,
                   ),
                 ),
                 style: TextButton.styleFrom(
@@ -204,7 +217,13 @@ Future<void> prendreUneNouvellePhotoArticle(
       } else if (photo["message"] == "ok") {
         tabPhoto.insert(0, photo);
         setStating();
-      } else {}
+      } else {
+        messageErreurBar(
+          context,
+          messageErr: "Ajoutez une photo !",
+          couleur: Colors.green,
+        );
+      }
     } catch (e) {}
   }
   cameraAuto = false;
@@ -245,14 +264,27 @@ Widget inputFieldnomProduitAjoutProduit(
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Text(
-        "Nom du produit",
-        style: TextStyle(fontSize: larg(context, ratio: 0.035)),
+      Row(
+        children: [
+          Text(
+            "Nom du produit",
+            style: TextStyle(fontSize: larg(context, ratio: 0.035)),
+          ),
+          Text(
+            "  (et autres informations utiles)",
+            style: TextStyle(fontSize: larg(context, ratio: 0.022)),
+          ),
+        ],
       ),
       TextFormField(
         onChanged: (value) {},
         controller: _nomProduitAjoutController,
-        validator: (value) {},
+        validator: (value) {
+          if (value == null || value.length <= 2) {
+            return "Ajoutez le nom d'u produit";
+          }
+          return null;
+        },
 
         decoration: InputDecoration(
           enabledBorder: OutlineInputBorder(
@@ -296,11 +328,31 @@ Widget inputFieldPrixProduitAjoutProduit(
         style: TextStyle(fontSize: larg(context, ratio: 0.035)),
       ),
       TextFormField(
+        keyboardType: TextInputType.number,
         onChanged: (value) {},
         controller: _prixProduitAjoutController,
-        validator: (value) {},
+        validator: (value) {
+          if (value == null || value == "") {
+            return "Ajoutez le prix de vente";
+          }
+          if (int.parse(value) <= 100) {
+            return "Somme suppérieur à 100FCFA";
+          }
+          return null;
+        },
 
         decoration: InputDecoration(
+          prefix: Container(
+            margin: EdgeInsetsGeometry.only(right: larg(context, ratio: 0.03)),
+
+            child: Text(
+              "FCFA",
+              style: TextStyle(
+                color: Color(0xFFBE4A00),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
           enabledBorder: OutlineInputBorder(
             borderSide: BorderSide(
               color: Colors.grey, // Couleur de la bordure
@@ -462,8 +514,33 @@ void boiteAjoutLien(BuildContext context, Function setStating) {
   );
 }
 
-List listeCocherTailleVetement = [false, false, false, false, false];
-List<String> listeNomTaille = ['S', 'M', 'L', 'XL', 'XXL'];
+//List listeCocherTailleVetement = [false, false, false, false, false];
+List<String> listeNomTaille = [
+  'S', // Small
+  'M', // Medium
+  'L', // Large
+  'XL', // Extra Large
+  'XXL', // 2X Large
+  'XS', // Extra Small
+  'XXXL', // 3X Large
+  'XXXS', // 3X Small (rare)
+  'XXXXL', // 4X Large
+  'XXXXXL', // 5X Large (très rare)
+];
+
+List<bool> listeCocherTailleVetement = [
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+];
+
 Widget listeTaillesVetements(BuildContext context, Function setStating) {
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
@@ -491,93 +568,152 @@ Widget listeTaillesVetements(BuildContext context, Function setStating) {
             strokeAlign: BorderSide.strokeAlignInside,
           ),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            !listeCocherTailleVetement.contains(true)
-                ? Column(
-                    children: [
-                      IconButton(
-                        onPressed: () {
-                          listeCocherTailleVetement = [
-                            true,
-                            true,
-                            true,
-                            true,
-                            true,
-                          ];
-                          setStating();
-                        },
-                        icon: Icon(Icons.select_all),
-                      ),
-                      Text(
-                        "Tous",
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  )
-                : Column(
-                    children: [
-                      IconButton(
-                        onPressed: () {
-                          listeCocherTailleVetement = [
-                            false,
-                            false,
-                            false,
-                            false,
-                            false,
-                          ];
-                          setStating();
-                        },
-                        icon: Icon(Icons.close),
-                      ),
-                      Text(
-                        "Aucun",
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-            ...listeCocherTailleVetement.asMap().entries.map((entry) {
-              int key = entry.key;
-              bool valeur = entry.value;
+        child: SizedBox(
+          height: long(context, ratio: 0.08),
 
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Checkbox(
-                    value: valeur,
-                    onChanged: (value) {
-                      listeCocherTailleVetement[key] = value!;
-                      setStating();
-                    },
-                  ),
-                  listeNomTaille[key] == "S"
-                      ? Icon(Icons.child_care)
-                      : Text(
-                          listeNomTaille[key],
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
+          child: Scrollbar(
+            child: ListView(
+              padding: EdgeInsetsGeometry.all(0),
+              scrollDirection: Axis.horizontal,
+              //mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                !listeCocherTailleVetement.contains(true)
+                    ? Column(
+                        children: [
+                          IconButton(
+                            onPressed: () {
+                              listeCocherTailleVetement = [
+                                true,
+                                true,
+                                true,
+                                true,
+                                true,
+                                true,
+                                true,
+                                true,
+                                true,
+                                true,
+                              ];
+                              setStating();
+                            },
+                            icon: Icon(Icons.select_all),
                           ),
-                        ),
-                ],
-              );
-            }),
-          ],
+                          Text(
+                            "Tous",
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      )
+                    : Column(
+                        children: [
+                          IconButton(
+                            onPressed: () {
+                              listeCocherTailleVetement = [
+                                false,
+                                false,
+                                false,
+                                false,
+                                false,
+                                false,
+                                false,
+                                false,
+                                false,
+                                false,
+                              ];
+                              setStating();
+                            },
+                            icon: Icon(Icons.close),
+                          ),
+                          Text(
+                            "Aucun",
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                ...listeCocherTailleVetement.asMap().entries.map((entry) {
+                  int key = entry.key;
+                  bool valeur = entry.value;
+
+                  return Row(
+                    children: [
+                      SizedBox(width: larg(context, ratio: 0.07)),
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Checkbox(
+                            value: valeur,
+                            onChanged: (value) {
+                              listeCocherTailleVetement[key] = value!;
+                              setStating();
+                            },
+                            shape: const CircleBorder(), // 👈 rond
+                            side: const BorderSide(
+                              width: 1.5,
+                              color: Colors.grey,
+                            ), // bord visible
+                            checkColor: Colors.white, // couleur du "✔"
+                            activeColor: Color(0xFFBE4A00), // fond quand coché
+                          ),
+                          listeNomTaille[key] == "S"
+                              ? Icon(Icons.child_care)
+                              : Text(
+                                  listeNomTaille[key],
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                        ],
+                      ),
+                    ],
+                  );
+                }),
+              ],
+            ),
+          ),
         ),
       ),
     ],
   );
 }
 
-List listeCocherPointureChessure = [false, false, false, false, false];
-List<String> listeNomPointure = ['S', '38-39', '40-41', '42-43', '44+'];
+List listeCocherPointureChessure = [
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+];
+List<String> listeNomPointure = [
+  'S', // Pour bébé
+  '28', '29', '30', '31', '32', '33', // Enfants
+  '34', '35', '36', '37', // Ados / femmes
+  '38', '39', '40', '41', '42', // Adultes (standard)
+  '43', '44', '45', '46', '47', '48', // Grands pieds
+];
 Widget listeTaillesChessure(BuildContext context, Function setStating) {
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
@@ -604,85 +740,137 @@ Widget listeTaillesChessure(BuildContext context, Function setStating) {
             strokeAlign: BorderSide.strokeAlignInside,
           ),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            !listeCocherPointureChessure.contains(true)
-                ? Column(
-                    children: [
-                      IconButton(
-                        onPressed: () {
-                          listeCocherPointureChessure = [
-                            true,
-                            true,
-                            true,
-                            true,
-                            true,
-                          ];
-                          setStating();
-                        },
-                        icon: Icon(Icons.select_all),
-                      ),
-                      Text(
-                        "Tous",
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  )
-                : Column(
-                    children: [
-                      IconButton(
-                        onPressed: () {
-                          listeCocherPointureChessure = [
-                            false,
-                            false,
-                            false,
-                            false,
-                            false,
-                          ];
-                          setStating();
-                        },
-                        icon: Icon(Icons.close),
-                      ),
-                      Text(
-                        "Aucun",
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-            ...listeCocherPointureChessure.asMap().entries.map((entry) {
-              int key = entry.key;
-              bool valeur = entry.value;
-
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Checkbox(
-                    value: valeur,
-                    onChanged: (value) {
-                      listeCocherPointureChessure[key] = value!;
-                      setStating();
-                    },
-                  ),
-                  listeNomPointure[key] == "S"
-                      ? Icon(Icons.child_care)
-                      : Text(
-                          listeNomPointure[key],
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
+        child: SizedBox(
+          height: long(context, ratio: 0.08),
+          child: Scrollbar(
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              //mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                !listeCocherPointureChessure.contains(true)
+                    ? Column(
+                        children: [
+                          IconButton(
+                            onPressed: () {
+                              listeCocherPointureChessure = [
+                                true,
+                                true,
+                                true,
+                                true,
+                                true,
+                                true,
+                                true,
+                                true,
+                                true,
+                                true,
+                                true,
+                                true,
+                                true,
+                                true,
+                                true,
+                                true,
+                                true,
+                                true,
+                                true,
+                                true,
+                                true,
+                                true,
+                              ];
+                              setStating();
+                            },
+                            icon: Icon(Icons.select_all),
                           ),
-                        ),
-                ],
-              );
-            }),
-          ],
+                          Text(
+                            "Tous",
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      )
+                    : Column(
+                        children: [
+                          IconButton(
+                            onPressed: () {
+                              listeCocherPointureChessure = [
+                                false,
+                                false,
+                                false,
+                                false,
+                                false,
+                                false,
+                                false,
+                                false,
+                                false,
+                                false,
+                                false,
+                                false,
+                                false,
+                                false,
+                                false,
+                                false,
+                                false,
+                                false,
+                                false,
+                                false,
+                                false,
+                                false,
+                              ];
+                              setStating();
+                            },
+                            icon: Icon(Icons.close),
+                          ),
+                          Text(
+                            "Aucun",
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                ...listeCocherPointureChessure.asMap().entries.map((entry) {
+                  int key = entry.key;
+                  bool valeur = entry.value;
+
+                  return Row(
+                    children: [
+                      SizedBox(width: larg(context, ratio: 0.06)),
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Checkbox(
+                            value: valeur,
+                            onChanged: (value) {
+                              listeCocherPointureChessure[key] = value!;
+                              setStating();
+                            },
+                            shape: const CircleBorder(), // 👈 rond
+                            side: const BorderSide(
+                              width: 1.5,
+                              color: Colors.grey,
+                            ), // bord visible
+                            checkColor: Colors.white, // couleur du "✔"
+                            activeColor: Color(0xFFBE4A00),
+                          ),
+                          listeNomPointure[key] == "S"
+                              ? Icon(Icons.child_care)
+                              : Text(
+                                  listeNomPointure[key],
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                        ],
+                      ),
+                    ],
+                  );
+                }),
+              ],
+            ),
+          ),
         ),
       ),
     ],
@@ -694,17 +882,33 @@ Widget boutonAjouterArticle(BuildContext context, Function setStating) {
     //margin: EdgeInsets.symmetric(horizontal: larg(context, ratio: 0.02)),
     width: double.infinity, // Prend toute la largeur disponible
     child: TextButton.icon(
-      onPressed: () {},
+      onPressed: loadingEnvoieProduit
+          ? null
+          : () {
+              if (_formKeyAjoutProduit.currentState!.validate()) {
+                if (tabPhoto.isEmpty) {
+                  cameraAuto = true;
+                  prendreUneNouvellePhotoArticle(context, setStating);
+                  return;
+                }
+
+                ajoutProduit(context, setStating);
+              }
+            },
       icon: Icon(Icons.add_box, color: Colors.white),
-      label: Text(
-        "Ajouter",
-        style: TextStyle(
-          fontSize: larg(context, ratio: 0.03),
-          color: Colors.white,
-        ),
-      ),
+      label: loadingEnvoieProduit
+          ? circular(message: "")
+          : Text(
+              "Ajouter",
+              style: TextStyle(
+                fontSize: larg(context, ratio: 0.03),
+                color: Colors.white,
+              ),
+            ),
       style: TextButton.styleFrom(
-        backgroundColor: Color(0xFFBE4A00), // Couleur de fond
+        backgroundColor: loadingEnvoieProduit
+            ? Colors.white
+            : Color(0xFFBE4A00), // Couleur de fond
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10), // Bords arrondis
           // Bordure
@@ -717,4 +921,128 @@ Widget boutonAjouterArticle(BuildContext context, Function setStating) {
 
 Widget titreTexbox(BuildContext context, {String text = "Text"}) {
   return Text(text, style: TextStyle(fontSize: larg(context, ratio: 0.035)));
+}
+
+List imageEnvoyer = [];
+List<String> tabLien = [];
+bool loadingEnvoieProduit = false;
+void ajoutProduit(BuildContext context, Function setStating) async {
+  loadingEnvoieProduit = true;
+  setStating();
+  if (!await CloudFirestore().checkConnexionFirestore()) {
+    messageErreurBar(context, messageErr: "Vérifiez votre connection !");
+    return;
+  }
+
+  final regex = RegExp(
+    r'^https?:\/\/.*\.(?:png|jpg|jpeg|gif|bmp|webp)$',
+    caseSensitive: false,
+  );
+  //envoie et reccuperation liens Image
+  try {
+    for (var i = 0; i < tabPhoto.length; i++) {
+      if (regex.hasMatch(tabPhoto[i]["lien"])) {
+        tabLien.add(tabPhoto[i]["lien"]);
+      } else {
+        if (!imageEnvoyer.contains(tabPhoto[i])) {
+          print("hjkhkj");
+          final lien = await envoieImage(tabPhoto[i]["image"]);
+          print(lien);
+          tabLien.add(lien);
+          imageEnvoyer.add(tabPhoto[i]);
+        }
+      }
+    }
+  } catch (e) {
+    loadingEnvoieProduit = false;
+    setStating();
+    messageErreurBar(context, messageErr: e.toString());
+    return;
+  }
+
+  final Map<String, dynamic> mapProduit = {
+    "uidBoutique": "Indéfinit pour le moment",
+    "nomLocalite": "daloa",
+    "positionLocalite": [6.55, 7.55],
+    "nomTemporaireProduit": _nomProduitAjoutController.text,
+    "prixTemporaireProduit": _prixProduitAjoutController.text,
+    "taillesVentementDisponibles": listeCocherTailleVetement,
+    "pointuresChaussureDisponible": listeCocherPointureChessure,
+    "listeImagesTemporairesProduit": tabLien,
+    "status": 0,
+    "messageRefus": "",
+    "dateTime": await dd(),
+  };
+
+  if (await CloudFirestore().checkConnexionFirestore()) {
+    await CloudFirestore().ajoutBdd("produits", mapProduit);
+    renitialisePage();
+    messageErreurBar(
+      context,
+      messageErr: "Article ajouté",
+      couleur: Colors.green,
+    );
+    loadingEnvoieProduit = false;
+
+    setStating();
+    return;
+  } else {
+    loadingEnvoieProduit = false;
+    setStating();
+    messageErreurBar(context, messageErr: "Vérifiez votre connection !");
+    return;
+  }
+}
+
+Future<DateTime> dd() async {
+  try {
+    DateTime heureUtc = await NTP.now();
+    return heureUtc.add(DateTime.now().timeZoneOffset);
+  } catch (e) {
+    return DateTime.now();
+  }
+}
+
+void renitialisePage() {
+  _nomProduitAjoutController.text = "";
+  _prixProduitAjoutController.text = "";
+  imageEnvoyer = [];
+  tabLien = [];
+  tabPhoto = [];
+  listeCocherPointureChessure = [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+  ];
+  listeCocherTailleVetement = [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+  ];
 }

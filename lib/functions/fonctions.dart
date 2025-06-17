@@ -1,8 +1,11 @@
+import 'dart:async';
+import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:flutter/material.dart';
 import 'package:koontaa/pages/compte/connection/page_connection.dart';
 import 'dart:math';
 import 'package:mailer/mailer.dart';
 import 'package:mailer/smtp_server.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 void changePage(BuildContext context, Widget page) {
   try {
@@ -255,4 +258,42 @@ double larg(BuildContext context, {double ratio = 1}) {
 
 double long(BuildContext context, {double ratio = 1}) {
   return MediaQuery.of(context).size.height * ratio;
+}
+
+Widget imageNetwork0(BuildContext context, String lienImage) {
+  print("0000");
+  return CachedNetworkImage(
+    imageUrl: lienImage,
+    progressIndicatorBuilder: (context, url, downloadProgress) =>
+        Center(child: circular(message: "")),
+    errorWidget: (context, url, error) => Icon(Icons.error),
+  );
+}
+
+final connectionChecker = InternetConnectionChecker.instance;
+Stream<bool> get etaConection => connectionChecker.onStatusChange.map(
+  (status) => status == InternetConnectionStatus.connected,
+);
+
+//List<String> listeLienImagesChargee = [];
+Widget imageNetwork(BuildContext context, String lienImage) {
+  return StreamBuilder<bool>(
+    stream: etaConection,
+    builder: (context, snapshot) {
+      try {
+        final estConnecte = snapshot.data!;
+        //print(estConnecte);
+        if (estConnecte) {
+          return imageNetwork0(
+            context,
+            lienImage,
+          ); // pour mettre l'image en cache
+        } else {
+          return SizedBox(child: imageNetwork0(context, lienImage));
+        }
+      } catch (e) {
+        return SizedBox(child: imageNetwork0(context, lienImage));
+      }
+    },
+  );
 }

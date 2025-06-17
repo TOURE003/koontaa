@@ -54,6 +54,9 @@ dependencies:
   google_fonts: ^6.2.1
   auto_size_text: ^3.0.0
   font_awesome_flutter: ^10.8.0
+  internet_connection_checker: ^3.0.1
+  cached_network_image: ^3.4.1
+  ntp: ^2.0.0
 
 dev_dependencies:
   flutter_test:
