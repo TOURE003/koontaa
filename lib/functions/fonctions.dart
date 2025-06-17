@@ -260,13 +260,20 @@ double long(BuildContext context, {double ratio = 1}) {
   return MediaQuery.of(context).size.height * ratio;
 }
 
-Widget imageNetwork0(BuildContext context, String lienImage) {
-  print("0000");
-  return CachedNetworkImage(
-    imageUrl: lienImage,
-    progressIndicatorBuilder: (context, url, downloadProgress) =>
-        Center(child: circular(message: "")),
-    errorWidget: (context, url, error) => Icon(Icons.error),
+Widget imageNetwork0(
+  BuildContext context,
+  String lienImage, {
+  double borderRadius = 5,
+}) {
+  return ClipRRect(
+    borderRadius: BorderRadius.circular(borderRadius), // ajuste le rayon ici
+    child: CachedNetworkImage(
+      imageUrl: lienImage,
+      fit: BoxFit.cover, // optionnel, pour remplir le conteneur proprement
+      progressIndicatorBuilder: (context, url, downloadProgress) =>
+          Center(child: circular(message: "")),
+      errorWidget: (context, url, error) => Icon(Icons.error),
+    ),
   );
 }
 

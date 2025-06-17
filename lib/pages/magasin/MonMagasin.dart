@@ -3,8 +3,10 @@
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:koontaa/functions/cloud_firebase.dart';
 import 'package:koontaa/functions/fonctions.dart';
 import 'package:koontaa/functions/gps.dart';
+import 'package:koontaa/pages/compte/connection/page_connection.dart';
 import 'package:koontaa/pages/home/home_widgets.dart';
 import 'package:koontaa/pages/magasin/ajoutDeProduit.dart';
 import 'package:koontaa/pages/recherche/recherche.dart';
@@ -31,80 +33,67 @@ class _MonMagasinState extends State<MonMagasin> {
 }
 
 Widget pageMagasin(BuildContext context, Function setStating) {
-  return CustomScrollView(
-    slivers: [
-      SliverAppBar(
-        expandedHeight: long(context, ratio: 0.5),
-        pinned: true,
-        floating: false,
-        backgroundColor: Color(0xFFBE4A00),
-        flexibleSpace: LayoutBuilder(
-          builder: (context, constraints) {
-            double top = constraints.biggest.height;
+  return Container(
+    color: Color(0xFFF9EFE0),
+    child: CustomScrollView(
+      slivers: [
+        SliverAppBar(
+          expandedHeight: long(context, ratio: 0.5),
+          pinned: true,
+          floating: false,
+          backgroundColor: Color(0xFFBE4A00),
+          flexibleSpace: LayoutBuilder(
+            builder: (context, constraints) {
+              double top = constraints.biggest.height;
 
-            return FlexibleSpaceBar(
-              centerTitle: true,
-              title: top < 100
-                  ? Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Expanded(child: Container()), // espace vide à gauche
-                        // Texte centré
-                        Text(
-                          'Koontaa',
-                          style: TextStyle(
-                            color: Color.fromARGB(221, 255, 255, 255),
-                            fontWeight: FontWeight.bold,
-                            fontSize: 20,
+              return FlexibleSpaceBar(
+                centerTitle: true,
+                title: top < 100
+                    ? Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Expanded(child: Container()), // espace vide à gauche
+                          // Texte centré
+                          Text(
+                            'Koontaa',
+                            style: TextStyle(
+                              color: Color.fromARGB(221, 255, 255, 255),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 20,
+                            ),
                           ),
-                        ),
 
-                        Spacer(), // espace flexible entre texte et icône
-                        // Icône à droite
-                        IconButton(
-                          onPressed: () {
-                            changePage(
-                              context,
-                              const Recherche(title: "Page de Récherche"),
-                            );
-                          },
-                          icon: Icon(Icons.search, color: Colors.white),
-                        ),
-                      ],
-                    )
-                  : null,
-              background: Container(
-                color: Color(0xFFF9EFE0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    SizedBox(height: long(context, ratio: 0.05)),
-                    enteteMagasinInfo(context, setStating),
-                  ],
+                          Spacer(), // espace flexible entre texte et icône
+                          // Icône à droite
+                          IconButton(
+                            onPressed: () {
+                              changePage(
+                                context,
+                                const Recherche(title: "Page de Récherche"),
+                              );
+                            },
+                            icon: Icon(Icons.search, color: Colors.white),
+                          ),
+                        ],
+                      )
+                    : null,
+                background: Container(
+                  color: Color(0xFFF9EFE0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(height: long(context, ratio: 0.05)),
+                      enteteMagasinInfo(context, setStating),
+                    ],
+                  ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         ),
-      ),
-      StreamBuilder(
-        stream: etaConection,
-        builder: (context, snapshot) {
-          return SliverList(
-            delegate: SliverChildBuilderDelegate(childCount: 300, (
-              context,
-              index,
-            ) {
-              return !(lienImage != "annule-file" &&
-                      lienImage != "err-file" &&
-                      lienImage != "0")
-                  ? Text("pas d'image")
-                  : Image.network(lienImage);
-            }),
-          );
-        },
-      ),
-    ],
+        listeProduitBoutique0(context, setStating),
+      ],
+    ),
   );
 }
 
@@ -332,6 +321,93 @@ Widget bouttonAjouterProduits(BuildContext context) {
         ),
         padding: EdgeInsets.symmetric(vertical: 16), // Hauteur du bouton
       ),
+    ),
+  );
+}
+
+final CloudFirestore listeProduitMagasin0 = CloudFirestore();
+Widget listeProduitBoutique0(BuildContext context, Function setStating) {
+  return StreamBuilder(
+    stream: listeProduitMagasin0.lectureBdd(
+      "produits",
+      filtreCompose: cd("uidBoutique", "Indéfinit pour le moment"),
+    ),
+    builder: (context, snapshot) {
+      if (snapshot.connectionState == ConnectionState.waiting) {
+        return SliverToBoxAdapter(child: circular());
+      }
+      if (snapshot.hasError) {
+        print('Erreur lors de la lecture ${snapshot.error}');
+        return SliverToBoxAdapter(
+          child: Text('Erreur lors de la lecture ${snapshot.error}'),
+        );
+      }
+      if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+        return SliverToBoxAdapter(child: Text('Aucun article trouvé'));
+      }
+
+      final docs = snapshot.data!.docs;
+      //return Text(data["nom"] ?? "");
+
+      return SliverList(
+        delegate: SliverChildBuilderDelegate(childCount: docs.length, (
+          context,
+          index,
+        ) {
+          final data = docs[index].data() as Map<String, dynamic>;
+          return contProduitBoutique0(context, data);
+        }),
+      );
+    },
+  );
+}
+
+Widget contProduitBoutique0(BuildContext context, Map data) {
+  return Container(
+    height: long(context, ratio: 1 / 6),
+
+    margin: EdgeInsets.symmetric(
+      horizontal: larg(context, ratio: 0.03),
+      vertical: long(context, ratio: 0.003),
+    ),
+    //decoration: BoxDecoration(border: Border.all(style: BorderStyle.solid)),
+    child: Row(
+      children: [
+        Container(
+          width: larg(context, ratio: 1 / 4),
+          height: long(context, ratio: 1 / 6),
+          child: imageNetwork(
+            context,
+            data["listeImagesTemporairesProduit"][0],
+          ),
+          //child: Text(data["listeImagesTemporairesProduit"][0]),
+        ),
+        Container(
+          margin: EdgeInsets.symmetric(horizontal: larg(context, ratio: 0.03)),
+          padding: EdgeInsets.all(larg(context, ratio: 0.03)),
+          height: long(context, ratio: 1 / 6),
+          width: larg(context, ratio: 2 / 4),
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(
+                color: Colors.grey, // couleur de la bordure
+                width: 0.5, // épaisseur de la bordure
+              ),
+            ),
+          ),
+
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                data["nomTemporaireProduit"],
+                style: TextStyle(fontSize: long(context, ratio: 0.02)),
+              ),
+            ],
+          ),
+        ),
+      ],
     ),
   );
 }
