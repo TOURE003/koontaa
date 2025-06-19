@@ -5,6 +5,9 @@ import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'dart:convert';
 
+import 'package:crypto/crypto.dart';
+import 'package:koontaa/functions/cloud_firebase.dart';
+
 Future<Map<String, dynamic>> imageUser({bool camera = false}) async {
   try {
     final picker = ImagePicker();
@@ -42,12 +45,32 @@ Future<String> envoieImage(XFile? pickedFile) async {
     return tentative;
   }
 
-  tentative = await uploadImageToImgur(pickedFile);
+  /*tentative = await uploadImageToImgur(pickedFile);
   if (tentative != "err-file") {
     return tentative;
-  }
+  }*/
 
   return "err-file";
+}
+
+Future<bool> supprimerImage(String lienImage) async {
+  final idImage = await CloudFirestore().lectureUBdd(
+    "infosImages",
+    filtreCompose: cd("lien", lienImage),
+  );
+
+  if (idImage != null && idImage.docs.isNotEmpty) {
+    final docs = idImage.docs;
+    final idLienImage = docs[0].data() as Map<String, dynamic>;
+    //print("sup");
+    final sup = await deleteImageFromCloudinary(idLienImage["idSup"]);
+    if (sup) {
+      CloudFirestore().modif("infosImages", docs[0].id, {"status": false});
+    }
+    return true;
+  }
+
+  return false;
 }
 
 Future<String> uploadImageToCloudinary(XFile? pickedFile) async {
@@ -74,12 +97,55 @@ Future<String> uploadImageToCloudinary(XFile? pickedFile) async {
     if (response.statusCode == 200) {
       final resStr = await response.stream.bytesToString();
       final data = jsonDecode(resStr);
+      CloudFirestore().ajoutBdd("infosImages", {
+        "lien": data['secure_url'],
+        "idSup": data['public_id'],
+        "serveur": "cloudinary",
+        "status": true,
+        "cloudName": "ddjkeamgh",
+      });
       return data['secure_url'];
     } else {
       return "err-file";
     }
   } catch (e) {
     return "err-file";
+  }
+}
+
+Future<bool> deleteImageFromCloudinary(String publicId) async {
+  const cloudName = 'ddjkeamgh';
+  const apiKey = '583363455265159';
+  const apiSecret = '6AN6-nqgGFV8EvFOAilGltaFGAk';
+
+  final timestamp = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+
+  final signatureRaw = 'public_id=$publicId&timestamp=$timestamp$apiSecret';
+  final signature = sha1.convert(utf8.encode(signatureRaw)).toString();
+
+  final uri = Uri.parse(
+    'https://api.cloudinary.com/v1_1/$cloudName/image/destroy',
+  );
+
+  try {
+    final response = await http.post(
+      uri,
+      body: {
+        'public_id': publicId,
+        'api_key': apiKey,
+        'timestamp': timestamp.toString(),
+        'signature': signature,
+        //'invalidate': 'true',
+      },
+    );
+    if (response.statusCode == 200) {
+      final body = jsonDecode(response.body);
+      return body['result'] == 'ok';
+    } else {
+      return false;
+    }
+  } catch (e) {
+    return false;
   }
 }
 

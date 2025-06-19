@@ -1,4 +1,4 @@
-import 'dart:ffi';
+//import 'dart:ffi';
 import 'dart:io';
 import 'package:koontaa/functions/cloud_firebase.dart';
 import 'package:ntp/ntp.dart';
@@ -945,9 +945,8 @@ void ajoutProduit(BuildContext context, Function setStating) async {
         tabLien.add(tabPhoto[i]["lien"]);
       } else {
         if (!imageEnvoyer.contains(tabPhoto[i])) {
-          print("hjkhkj");
           final lien = await envoieImage(tabPhoto[i]["image"]);
-          print(lien);
+
           tabLien.add(lien);
           imageEnvoyer.add(tabPhoto[i]);
         }

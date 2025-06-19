@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'package:auto_size_text/auto_size_text.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:flutter/material.dart';
 import 'package:koontaa/pages/compte/connection/page_connection.dart';
@@ -283,7 +285,12 @@ Stream<bool> get etaConection => connectionChecker.onStatusChange.map(
 );
 
 //List<String> listeLienImagesChargee = [];
-Widget imageNetwork(BuildContext context, String lienImage) {
+
+Widget imageNetwork(
+  BuildContext context,
+  String lienImage, {
+  double borderRadius = 5,
+}) {
   return StreamBuilder<bool>(
     stream: etaConection,
     builder: (context, snapshot) {
@@ -294,13 +301,221 @@ Widget imageNetwork(BuildContext context, String lienImage) {
           return imageNetwork0(
             context,
             lienImage,
+            borderRadius: borderRadius,
           ); // pour mettre l'image en cache
         } else {
-          return SizedBox(child: imageNetwork0(context, lienImage));
+          return SizedBox(
+            child: imageNetwork0(
+              context,
+              lienImage,
+              borderRadius: borderRadius,
+            ),
+          );
         }
       } catch (e) {
-        return SizedBox(child: imageNetwork0(context, lienImage));
+        return SizedBox(
+          child: imageNetwork0(context, lienImage, borderRadius: borderRadius),
+        );
       }
     },
+  );
+}
+
+String arg(montant) {
+  final nombre = montant.toString();
+  final buffer = StringBuffer();
+  int compteur = 0;
+
+  for (int i = nombre.length - 1; i >= 0; i--) {
+    buffer.write(nombre[i]);
+    compteur++;
+
+    if (compteur % 3 == 0 && i != 0) {
+      buffer.write(' ');
+    }
+  }
+
+  return buffer.toString().split('').reversed.join();
+}
+
+// h1
+Widget h1(
+  BuildContext context, {
+  String texte = "Titre 1",
+  Color couleur = Colors.black,
+  int nbrDeLigneMax = 1,
+}) {
+  return AutoSizeText(
+    texte,
+    maxLines: nbrDeLigneMax,
+    overflow: TextOverflow.ellipsis,
+    style: TextStyle(
+      fontSize: long(context, ratio: 0.045),
+      fontWeight: FontWeight.bold,
+      color: couleur,
+    ),
+  );
+}
+
+Widget h2(
+  BuildContext context, {
+  String texte = "Titre 2",
+  Color couleur = Colors.black,
+  int nbrDeLigneMax = 1,
+}) {
+  return AutoSizeText(
+    texte,
+    maxLines: nbrDeLigneMax,
+    overflow: TextOverflow.ellipsis,
+    style: TextStyle(
+      fontSize: long(context, ratio: 0.04),
+      fontWeight: FontWeight.w700,
+      fontStyle: FontStyle.italic,
+      color: couleur,
+    ),
+  );
+}
+
+Widget h3(
+  BuildContext context, {
+  String texte = "Titre 3",
+  Color couleur = Colors.black,
+  int nbrDeLigneMax = 1,
+}) {
+  return AutoSizeText(
+    texte,
+    maxLines: nbrDeLigneMax,
+    overflow: TextOverflow.ellipsis,
+    style: TextStyle(
+      fontSize: long(context, ratio: 0.035),
+      fontWeight: FontWeight.w600,
+      color: couleur,
+    ),
+  );
+}
+
+Widget h4(
+  BuildContext context, {
+  String texte = "Titre 4",
+  Color couleur = Colors.black,
+  int nbrDeLigneMax = 1,
+}) {
+  return AutoSizeText(
+    texte,
+    maxLines: nbrDeLigneMax,
+    overflow: TextOverflow.ellipsis,
+    style: TextStyle(
+      fontSize: long(context, ratio: 0.03),
+      fontWeight: FontWeight.w500,
+      color: couleur,
+    ),
+  );
+}
+
+Widget h5(
+  BuildContext context, {
+  String texte = "Titre 5",
+  Color couleur = Colors.black,
+  int nbrDeLigneMax = 1,
+}) {
+  return AutoSizeText(
+    texte,
+    maxLines: nbrDeLigneMax,
+    overflow: TextOverflow.ellipsis,
+    style: TextStyle(
+      fontSize: long(context, ratio: 0.025),
+      fontWeight: FontWeight.w400,
+      color: couleur,
+    ),
+  );
+}
+
+Widget h6(
+  BuildContext context, {
+  String texte = "Titre 6",
+  Color couleur = Colors.black,
+  int nbrDeLigneMax = 1,
+}) {
+  return AutoSizeText(
+    texte,
+    maxLines: nbrDeLigneMax,
+    overflow: TextOverflow.ellipsis,
+    style: TextStyle(
+      fontSize: long(context, ratio: 0.02),
+      fontWeight: FontWeight.w300,
+      color: couleur,
+    ),
+  );
+}
+
+Widget h7(
+  BuildContext context, {
+  String texte = "Titre 7",
+  Color couleur = Colors.black,
+  int nbrDeLigneMax = 1,
+}) {
+  return AutoSizeText(
+    texte,
+    maxLines: nbrDeLigneMax,
+    overflow: TextOverflow.ellipsis,
+    style: TextStyle(
+      fontSize: long(context, ratio: 0.018),
+      fontWeight: FontWeight.w300,
+      color: couleur,
+    ),
+  );
+}
+
+Widget h8(
+  BuildContext context, {
+  String texte = "Titre 8",
+  Color couleur = Colors.black,
+  int nbrDeLigneMax = 1,
+}) {
+  return AutoSizeText(
+    texte,
+    maxLines: nbrDeLigneMax,
+    overflow: TextOverflow.ellipsis,
+    style: TextStyle(
+      fontSize: long(context, ratio: 0.016),
+      fontWeight: FontWeight.w300,
+      color: couleur,
+    ),
+  );
+}
+
+Widget h9(
+  BuildContext context, {
+  String texte = "Titre 9",
+  Color couleur = Colors.black,
+  int nbrDeLigneMax = 1,
+}) {
+  return AutoSizeText(
+    texte,
+    maxLines: nbrDeLigneMax,
+    overflow: TextOverflow.ellipsis,
+    style: TextStyle(
+      fontSize: long(context, ratio: 0.014),
+      fontWeight: FontWeight.w300,
+      color: couleur,
+    ),
+  );
+}
+
+Widget h10(
+  BuildContext context, {
+  String texte = "Titre 10",
+  Color couleur = Colors.black,
+  int nbrDeLigneMax = 1,
+}) {
+  return AutoSizeText(
+    texte,
+    maxLines: nbrDeLigneMax,
+    overflow: TextOverflow.ellipsis,
+    style: TextStyle(
+      fontSize: long(context, ratio: 0.012),
+      fontWeight: FontWeight.w300,
+      color: couleur,
+    ),
   );
 }
