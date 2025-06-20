@@ -1076,14 +1076,16 @@ void messageErreurBar(
   String messageErr = "Une erreur s'est produit",
   Color couleur = Colors.red,
 }) {
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text(messageErr),
-      behavior: SnackBarBehavior.floating,
-      backgroundColor: couleur,
-      showCloseIcon: true,
-    ),
-  );
+  try {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(messageErr),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: couleur,
+        showCloseIcon: true,
+      ),
+    );
+  } catch (e) {}
 }
 //Widget de confirmation otp-------------------------------------------------------------
 //---------------------------------------------------------------------------------------

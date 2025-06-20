@@ -11,6 +11,9 @@ import 'package:koontaa/functions/storage.dart';
 import 'package:koontaa/pages/compte/connection/page_connection.dart';
 import 'package:flutter/services.dart';
 
+bool? modificationProduit;
+String? idProduitsModifie;
+
 class AjoutProduits extends StatefulWidget {
   const AjoutProduits({super.key, required this.title});
 
@@ -43,6 +46,13 @@ class _AjoutProduitsState extends State<AjoutProduits> {
               barreDePhoto(context, () {
                 setState(() {});
               }),
+
+              afficheMessage
+                  ? messageModifProduit(context, messageServerModifProduit, () {
+                      setState(() {});
+                    })
+                  : SizedBox(),
+
               SizedBox(height: long(context, ratio: 0.025)),
               inputFieldnomProduitAjoutProduit(context, () {
                 setState(() {});
@@ -60,15 +70,86 @@ class _AjoutProduitsState extends State<AjoutProduits> {
                 setState(() {});
               }),
               SizedBox(height: long(context, ratio: 0.025)),
-              boutonAjouterArticle(context, () {
-                setState(() {});
-              }),
+              !modificationProduit!
+                  ? boutonAjouterArticle(context, () {
+                      try {
+                        setState(() {});
+                      } catch (e) {}
+                      ;
+                    })
+                  : boutonModifierArticle(context, () {
+                      try {
+                        setState(() {});
+                      } catch (e) {}
+                    }),
             ],
           ),
         ),
       ),
     );
   }
+}
+
+bool afficheMessage = true;
+String messageServerModifProduit = "";
+Widget messageModifProduit(
+  BuildContext context,
+  String message,
+  Function settating,
+) {
+  double hauteurTotale = long(context, ratio: 0.15);
+  double hauteurBarre = long(context, ratio: 0.03);
+
+  return !afficheMessage
+      ? SizedBox()
+      : Container(
+          padding: EdgeInsets.all(larg(context, ratio: 0.02)),
+          margin: EdgeInsets.only(top: long(context, ratio: 0.025)),
+          width: double.infinity,
+          height: hauteurTotale,
+          decoration: BoxDecoration(
+            border: Border.all(color: Color(0xFFBE4A00), width: 2),
+            borderRadius: BorderRadius.circular(10),
+            color: Colors.white,
+          ),
+          child: Column(
+            children: [
+              // Barre de titre avec bouton de fermeture
+              Container(
+                height: hauteurBarre,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: h7(
+                        context,
+                        texte: "Message",
+                        couleur: Color(0xFFBE4A00),
+                        gras: true,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () {
+                        afficheMessage = false;
+                        settating();
+                      },
+                      icon: Icon(Icons.close, size: 20, color: Colors.black),
+                      padding: EdgeInsets.zero,
+                      constraints:
+                          BoxConstraints(), // réduit l’espace pris par le bouton
+                    ),
+                  ],
+                ),
+              ),
+
+              // Message avec scroll si nécessaire
+              Expanded(
+                child: SingleChildScrollView(
+                  child: h8(context, texte: message, nbrDeLigneMax: 1000),
+                ),
+              ),
+            ],
+          ),
+        );
 }
 
 List<Map<String, dynamic>> tabPhoto = [];
@@ -255,8 +336,7 @@ Widget barreDePhoto(BuildContext context, Function setStating) {
   );
 }
 
-final TextEditingController _nomProduitAjoutController =
-    TextEditingController();
+final TextEditingController nomProduitAjoutController = TextEditingController();
 Widget inputFieldnomProduitAjoutProduit(
   BuildContext context,
   Function setStating,
@@ -278,7 +358,7 @@ Widget inputFieldnomProduitAjoutProduit(
       ),
       TextFormField(
         onChanged: (value) {},
-        controller: _nomProduitAjoutController,
+        controller: nomProduitAjoutController,
         validator: (value) {
           if (value == null || value.length <= 2) {
             return "Ajoutez le nom d'u produit";
@@ -314,7 +394,7 @@ Widget inputFieldnomProduitAjoutProduit(
   );
 }
 
-final TextEditingController _prixProduitAjoutController =
+final TextEditingController prixProduitAjoutController =
     TextEditingController();
 Widget inputFieldPrixProduitAjoutProduit(
   BuildContext context,
@@ -330,7 +410,7 @@ Widget inputFieldPrixProduitAjoutProduit(
       TextFormField(
         keyboardType: TextInputType.number,
         onChanged: (value) {},
-        controller: _prixProduitAjoutController,
+        controller: prixProduitAjoutController,
         validator: (value) {
           if (value == null || value == "") {
             return "Ajoutez le prix de vente";
@@ -380,19 +460,20 @@ Widget inputFieldPrixProduitAjoutProduit(
   );
 }
 
+List<Map<String, dynamic>> tabImgeSup = [];
 Widget imageTemporaire(
   BuildContext context,
   Function setStating,
   Map<String, dynamic> image,
 ) {
-  final Image img;
+  final Widget img;
   final regex = RegExp(
     r'^https?:\/\/.*\.(?:png|jpg|jpeg|gif|bmp|webp)$',
     caseSensitive: false,
   );
 
   if (regex.hasMatch(image["lien"])) {
-    img = Image.network(image["lien"], fit: BoxFit.cover);
+    img = imageNetwork(context, image["lien"], borderRadius: 6);
   } else {
     img = Image.file(File(image["image"].path), fit: BoxFit.cover);
   }
@@ -414,9 +495,24 @@ Widget imageTemporaire(
               icon: Icon(Icons.close, size: 16),
               //padding: EdgeInsets.zero,
               //constraints: BoxConstraints(),
-              onPressed: () {
-                tabPhoto.removeWhere((element) => element == image);
-                setStating(); // Tu pourras définir une action ici
+              onPressed: () async {
+                if (!modificationProduit!) {
+                  tabPhoto.removeWhere((element) => element == image);
+                  setStating();
+                } else {
+                  if (!await CloudFirestore().checkConnexionFirestore()) {
+                    messageErreurBar(
+                      context,
+                      messageErr: "Vérifiez votreconnection !",
+                    );
+                    return;
+                  }
+                  tabImgeSup.add(image);
+                  tabPhoto.removeWhere((element) => element == image);
+                  setStating();
+                  print(tabImgeSup);
+                  //messageErreurBar(context, messageErr: "llklklkk");
+                }
               },
             ),
           ),
@@ -528,7 +624,7 @@ List<String> listeNomTaille = [
   'XXXXXL', // 5X Large (très rare)
 ];
 
-List<bool> listeCocherTailleVetement = [
+List listeCocherTailleVetement = [
   false,
   false,
   false,
@@ -884,7 +980,7 @@ Widget boutonAjouterArticle(BuildContext context, Function setStating) {
     child: TextButton.icon(
       onPressed: loadingEnvoieProduit
           ? null
-          : () {
+          : () async {
               if (_formKeyAjoutProduit.currentState!.validate()) {
                 if (tabPhoto.isEmpty) {
                   cameraAuto = true;
@@ -892,7 +988,16 @@ Widget boutonAjouterArticle(BuildContext context, Function setStating) {
                   return;
                 }
 
-                ajoutProduit(context, setStating);
+                if (await CloudFirestore().checkConnexionFirestore()) {
+                  ajoutProduit(context, setStating);
+                } else {
+                  loadingEnvoieProduit = false;
+                  setStating();
+                  messageErreurBar(
+                    context,
+                    messageErr: "Vérifiez votre connection !",
+                  );
+                }
               }
             },
       icon: Icon(Icons.add_box, color: Colors.white),
@@ -900,6 +1005,60 @@ Widget boutonAjouterArticle(BuildContext context, Function setStating) {
           ? circular(message: "")
           : Text(
               "Ajouter",
+              style: TextStyle(
+                fontSize: larg(context, ratio: 0.03),
+                color: Colors.white,
+              ),
+            ),
+      style: TextButton.styleFrom(
+        backgroundColor: loadingEnvoieProduit
+            ? Colors.white
+            : Color(0xFFBE4A00), // Couleur de fond
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10), // Bords arrondis
+          // Bordure
+        ),
+        padding: EdgeInsets.symmetric(vertical: 16), // Hauteur du bouton
+      ),
+    ),
+  );
+}
+
+Widget boutonModifierArticle(BuildContext context, Function setStating) {
+  return Container(
+    //margin: EdgeInsets.symmetric(horizontal: larg(context, ratio: 0.02)),
+    width: double.infinity, // Prend toute la largeur disponible
+    child: TextButton.icon(
+      onPressed: loadingEnvoieProduit
+          ? null
+          : () async {
+              if (_formKeyAjoutProduit.currentState!.validate()) {
+                if (tabPhoto.isEmpty) {
+                  messageErreurBar(
+                    context,
+                    messageErr: "Ajoutez une image",
+                    couleur: Colors.green,
+                  );
+                  return;
+                }
+
+                if (await CloudFirestore().checkConnexionFirestore()) {
+                  modifProduit(context, setStating);
+                } else {
+                  loadingEnvoieProduit = false;
+                  setStating();
+                  messageErreurBar(
+                    context,
+                    messageErr: "Vérifiez votre connection !",
+                  );
+                }
+              }
+            },
+      icon: Icon(Icons.edit, color: Colors.white),
+      label: loadingEnvoieProduit
+          ? circular(message: "")
+          : Text(
+              "Modifier",
               style: TextStyle(
                 fontSize: larg(context, ratio: 0.03),
                 color: Colors.white,
@@ -963,19 +1122,30 @@ void ajoutProduit(BuildContext context, Function setStating) async {
     "uidBoutique": "Indéfinit pour le moment",
     "nomLocalite": "daloa",
     "positionLocalite": [6.55, 7.55],
-    "nomTemporaireProduit": _nomProduitAjoutController.text,
-    "prixTemporaireProduit": _prixProduitAjoutController.text,
+    "nomTemporaireProduit": nomProduitAjoutController.text,
+    "nomPublique": "",
+    "prixTemporaireProduit": prixProduitAjoutController.text,
+    "prixPublique": "",
     "taillesVentementDisponibles": listeCocherTailleVetement,
     "pointuresChaussureDisponible": listeCocherPointureChessure,
     "listeImagesTemporairesProduit": tabLien,
+    "listeImagesPublique": [],
     "status": 0,
+    "etatEnBoutique": 0,
     "messageRefus": "",
     "dateTime": await dd(),
+    "note": 2.5,
+    "listeIdUserNote": [],
+    "listeNote": [],
+    "listeCommentaireIdUser": [],
+    "listeCommentaire": [],
+    "listeLikeIdUser": [],
+    "vendu": 0,
   };
 
   if (await CloudFirestore().checkConnexionFirestore()) {
     await CloudFirestore().ajoutBdd("produits", mapProduit);
-    renitialisePage();
+    renitialisePageAjoutArticle();
     messageErreurBar(
       context,
       messageErr: "Article ajouté",
@@ -993,6 +1163,63 @@ void ajoutProduit(BuildContext context, Function setStating) async {
   }
 }
 
+void modifProduit(BuildContext context, Function setStating) async {
+  loadingEnvoieProduit = true;
+  setStating();
+  try {
+    for (var i = 0; i < tabPhoto.length; i++) {
+      if (tabPhoto[i]["message"] != "modif") {
+        if (!imageEnvoyer.contains(tabPhoto[i])) {
+          final lien = await envoieImage(tabPhoto[i]["image"]);
+          tabLien.add(lien);
+          imageEnvoyer.add(tabPhoto[i]);
+        }
+      }
+    }
+  } catch (e) {
+    loadingEnvoieProduit = false;
+    setStating();
+    messageErreurBar(context, messageErr: e.toString());
+    return;
+  }
+
+  final Map<String, dynamic> mapProduit = {
+    "nomTemporaireProduit": nomProduitAjoutController.text,
+    "prixTemporaireProduit": prixProduitAjoutController.text,
+    "taillesVentementDisponibles": listeCocherTailleVetement,
+    "pointuresChaussureDisponible": listeCocherPointureChessure,
+    "listeImagesTemporairesProduit": tabLien,
+    "messageRefus": "",
+    "dateTimeModif": await dd(),
+  };
+
+  if (await CloudFirestore().checkConnexionFirestore()) {
+    await CloudFirestore().modif("produits", idProduitsModifie!, mapProduit);
+    //renitialisePage();
+    loadingEnvoieProduit = false;
+    setStating();
+
+    try {
+      for (var i = 0; i < tabImgeSup.length; i++) {
+        if (tabImgeSup[i]["message"] == "modif") {
+          supprimerImage(tabImgeSup[i]["lien"]);
+        }
+      }
+
+      Navigator.pop(context);
+      return;
+    } catch (e) {
+      Navigator.pop(context);
+      return;
+    }
+  } else {
+    loadingEnvoieProduit = false;
+    setStating();
+    messageErreurBar(context, messageErr: "Vérifiez votre connection !");
+    return;
+  }
+}
+
 Future<DateTime> dd() async {
   try {
     DateTime heureUtc = await NTP.now();
@@ -1002,9 +1229,9 @@ Future<DateTime> dd() async {
   }
 }
 
-void renitialisePage() {
-  _nomProduitAjoutController.text = "";
-  _prixProduitAjoutController.text = "";
+void renitialisePageAjoutArticle() {
+  nomProduitAjoutController.text = "";
+  prixProduitAjoutController.text = "";
   imageEnvoyer = [];
   tabLien = [];
   tabPhoto = [];

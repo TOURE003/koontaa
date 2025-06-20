@@ -1,6 +1,6 @@
 //import 'dart:nativewrappers/_internal/vm/lib/math_patch.dart';
 
-import 'dart:ffi';
+//import 'dart:ffi';
 
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -12,6 +12,10 @@ import 'package:koontaa/functions/storage.dart';
 import 'package:koontaa/pages/compte/connection/page_connection.dart';
 import 'package:koontaa/pages/home/home_widgets.dart';
 import 'package:koontaa/pages/magasin/ajoutDeProduit.dart';
+import 'package:koontaa/pages/magasin/produitAttenteModificationBoutique_widget.dart';
+import 'package:koontaa/pages/magasin/produitPublie_widget.dart';
+import 'package:koontaa/pages/magasin/produitRefuse_widget%20.dart';
+import 'package:koontaa/pages/magasin/produitTraitement_Widget.dart';
 import 'package:koontaa/pages/recherche/recherche.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -297,6 +301,16 @@ Widget bouttonAjouterProduits(BuildContext context) {
     child: TextButton.icon(
       onPressed: () {
         cameraAuto = true;
+        afficheMessage = false;
+        if (modificationProduit == null) {
+          modificationProduit = false;
+        } else if (modificationProduit!) {
+          modificationProduit = false;
+          renitialisePageAjoutArticle();
+        } else {
+          modificationProduit = false;
+        }
+
         changePage(context, AjoutProduits(title: "add produits"));
       },
       icon: Icon(Icons.add_box, color: Colors.white),
@@ -350,244 +364,29 @@ Widget listeProduitBoutique0(BuildContext context, Function setStating) {
           context,
           index,
         ) {
-          final data = docs[index].data() as Map<String, dynamic>;
-          return ContProduitBoutique(data: data, id: docs[index].id);
+          try {
+            final data = docs[index].data() as Map<String, dynamic>;
+            if (data["status"] == 0) {
+              return ContProduitBoutiqueTraitement(
+                data: data,
+                id: docs[index].id,
+              );
+            } else if (data["status"] == 1) {
+              return ContProduitBoutiqueRefuse(data: data, id: docs[index].id);
+            } else if (data["status"] == 2) {
+              return ContProduitBoutiqueAttenteModificationBoutique(
+                data: data,
+                id: docs[index].id,
+              );
+            } else if (data["status"] == 3) {
+              return ContProduitBoutiquePublie(data: data, id: docs[index].id);
+            }
+            return Text("data");
+          } catch (e) {
+            return SizedBox();
+          }
         }),
       );
     },
   );
 }
-
-Widget contProduitBoutiqueTraitement00(
-  BuildContext context,
-  Map data,
-  String id,
-) {
-  return Container(
-    height: long(context, ratio: 1 / 6),
-
-    padding: EdgeInsets.only(left: larg(context, ratio: 0.01)),
-    margin: EdgeInsets.symmetric(
-      horizontal: larg(context, ratio: 0.03),
-      vertical: long(context, ratio: 0.003),
-    ),
-    decoration: BoxDecoration(
-      borderRadius: BorderRadius.circular(larg(context, ratio: 0.02)),
-      color: Colors.white,
-    ),
-    child: Row(
-      children: [
-        Container(
-          width: larg(context, ratio: 1 / 4),
-          height: long(context, ratio: 1 / 7),
-          child: imageNetwork(
-            context,
-            data["listeImagesTemporairesProduit"][0],
-            borderRadius: larg(context, ratio: 0.02),
-          ),
-          //child: Text(data["listeImagesTemporairesProduit"][0]),
-        ),
-        //h1(),
-        Container(
-          margin: EdgeInsets.only(left: larg(context, ratio: 0.03)),
-          padding: EdgeInsets.all(larg(context, ratio: 0.02)),
-          height: long(context, ratio: 1 / 6),
-          width: larg(context, ratio: 2 / 4),
-
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              h5(context, texte: data["nomTemporaireProduit"]),
-              SizedBox(height: long(context, ratio: 0.01)),
-              Row(
-                children: [
-                  Icon(Icons.cached, color: Color(0x55BE4A00)),
-                  SizedBox(width: larg(context, ratio: 0.025)),
-                  h7(
-                    context,
-                    texte: "En traitément...",
-                    couleur: Color(0xFFBE4A00),
-                  ),
-                ],
-              ),
-              h8(
-                context,
-                texte:
-                    "Votre article est analysé par notre équipe et séra publié sous peu",
-                nbrDeLigneMax: 3,
-              ),
-            ],
-          ),
-        ),
-
-        Container(
-          width: larg(context, ratio: 1 / 7),
-          //decoration: BoxDecoration(border: Border.all()),
-          padding: EdgeInsets.only(top: larg(context, ratio: 0.03)),
-          height: long(context, ratio: 1 / 6),
-          child: Column(
-            children: [
-              h8(
-                context,
-                texte: "${arg(data["prixTemporaireProduit"])} F",
-                couleur: Color(0xFFBE4A00),
-              ),
-              IconButton(
-                onPressed: () async {
-                  bool sup = false;
-                  for (
-                    var i = 0;
-                    i < data["listeImagesTemporairesProduit"].length;
-                    i++
-                  ) {
-                    sup = await supprimerImage(
-                      data["listeImagesTemporairesProduit"][i],
-                    );
-                    if (!sup) {
-                      break;
-                    }
-                  }
-
-                  if (sup) {
-                    final supressionProd = await CloudFirestore().sup(
-                      "produits",
-                      id,
-                    );
-                  }
-                },
-                icon: Icon(Icons.close, color: Color.fromARGB(84, 190, 0, 0)),
-              ),
-              circular(message: ""),
-            ],
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
-class ContProduitBoutique extends StatefulWidget {
-  final Map data;
-  final String id;
-
-  const ContProduitBoutique({super.key, required this.data, required this.id});
-
-  @override
-  State<ContProduitBoutique> createState() => _ContProduitBoutiqueState();
-}
-
-class _ContProduitBoutiqueState extends State<ContProduitBoutique> {
-  bool enChargement = false;
-
-  Future<void> supprimerProduit() async {
-    setState(() => enChargement = true);
-
-    bool toutesSupprimees = true;
-
-    for (String url in widget.data["listeImagesTemporairesProduit"]) {
-      final result = await supprimerImage(url);
-      if (!result) {
-        toutesSupprimees = false;
-        break;
-      }
-    }
-
-    if (toutesSupprimees) {
-      await CloudFirestore().sup("produits", widget.id);
-    }
-
-    try {
-      setState(() => enChargement = false);
-    } catch (e) {}
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: long(context, ratio: 1 / 6),
-      padding: EdgeInsets.only(left: larg(context, ratio: 0.01)),
-      margin: EdgeInsets.symmetric(
-        horizontal: larg(context, ratio: 0.03),
-        vertical: long(context, ratio: 0.003),
-      ),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(larg(context, ratio: 0.02)),
-        color: Colors.white,
-      ),
-      child: Row(
-        children: [
-          // Image produit
-          Container(
-            width: larg(context, ratio: 1 / 4),
-            height: long(context, ratio: 1 / 7),
-            child: imageNetwork(
-              context,
-              widget.data["listeImagesTemporairesProduit"][0],
-              borderRadius: larg(context, ratio: 0.02),
-            ),
-          ),
-
-          // Texte
-          Container(
-            margin: EdgeInsets.only(left: larg(context, ratio: 0.03)),
-            padding: EdgeInsets.all(larg(context, ratio: 0.02)),
-            height: long(context, ratio: 1 / 6),
-            width: larg(context, ratio: 2 / 4),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                h5(context, texte: widget.data["nomTemporaireProduit"]),
-                SizedBox(height: long(context, ratio: 0.01)),
-                Row(
-                  children: [
-                    Icon(Icons.cached, color: Color(0x55BE4A00)),
-                    SizedBox(width: larg(context, ratio: 0.025)),
-                    h7(
-                      context,
-                      texte: "En traitement...",
-                      couleur: Color(0xFFBE4A00),
-                    ),
-                  ],
-                ),
-                h8(
-                  context,
-                  texte: "Votre article est analysé par notre équipe...",
-                  nbrDeLigneMax: 3,
-                ),
-              ],
-            ),
-          ),
-
-          // Prix et bouton
-          Container(
-            width: larg(context, ratio: 1 / 7),
-            padding: EdgeInsets.only(top: larg(context, ratio: 0.03)),
-            height: long(context, ratio: 1 / 6),
-            child: Column(
-              children: [
-                h8(
-                  context,
-                  texte: "${arg(widget.data["prixTemporaireProduit"])} F",
-                  couleur: Color(0xFFBE4A00),
-                ),
-                enChargement
-                    ? circular(message: "")
-                    : IconButton(
-                        onPressed: supprimerProduit,
-                        icon: Icon(
-                          Icons.close,
-                          color: Color.fromARGB(84, 190, 0, 0),
-                        ),
-                      ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-//https://www.shutterstock.com/image-vector/fashion-logo-design-template-suitable-260nw-2461938725.jpg
-//https://img.freepik.com/psd-gratuit/logo-du-smartphone-isole_23-2151232010.jpg

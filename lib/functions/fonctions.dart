@@ -8,6 +8,7 @@ import 'dart:math';
 import 'package:mailer/mailer.dart';
 import 'package:mailer/smtp_server.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 
 void changePage(BuildContext context, Widget page) {
   try {
@@ -266,12 +267,15 @@ Widget imageNetwork0(
   BuildContext context,
   String lienImage, {
   double borderRadius = 5,
+  bool pleinW = true,
 }) {
   return ClipRRect(
     borderRadius: BorderRadius.circular(borderRadius), // ajuste le rayon ici
     child: CachedNetworkImage(
       imageUrl: lienImage,
-      fit: BoxFit.cover, // optionnel, pour remplir le conteneur proprement
+      fit: pleinW
+          ? BoxFit.cover
+          : BoxFit.contain, // optionnel, pour remplir le conteneur proprement
       progressIndicatorBuilder: (context, url, downloadProgress) =>
           Center(child: circular(message: "")),
       errorWidget: (context, url, error) => Icon(Icons.error),
@@ -290,6 +294,7 @@ Widget imageNetwork(
   BuildContext context,
   String lienImage, {
   double borderRadius = 5,
+  bool pleinW = true,
 }) {
   return StreamBuilder<bool>(
     stream: etaConection,
@@ -314,7 +319,12 @@ Widget imageNetwork(
         }
       } catch (e) {
         return SizedBox(
-          child: imageNetwork0(context, lienImage, borderRadius: borderRadius),
+          child: imageNetwork0(
+            context,
+            lienImage,
+            borderRadius: borderRadius,
+            pleinW: pleinW,
+          ),
         );
       }
     },
@@ -338,12 +348,47 @@ String arg(montant) {
   return buffer.toString().split('').reversed.join();
 }
 
+double valeurDeLaNOte = 5;
+Widget noteArticle(
+  BuildContext context, {
+  note = 5,
+  bool modifiable = false,
+  double taille = 20,
+}) {
+  if (modifiable) {
+    return RatingBar.builder(
+      initialRating: note,
+      minRating: 1,
+      direction: Axis.horizontal,
+      allowHalfRating: true,
+      itemCount: 5,
+      itemSize: taille,
+      itemPadding: EdgeInsets.symmetric(horizontal: 4.0),
+      itemBuilder: (context, _) => Icon(Icons.star, color: Colors.amber),
+      onRatingUpdate: (rating) {
+        valeurDeLaNOte = rating;
+        //print("Nouvelle note : $rating");
+        // Sauvegarde dans ta base ici si nécessaire
+      },
+    );
+  }
+
+  return RatingBarIndicator(
+    rating: note,
+    itemBuilder: (context, index) => Icon(Icons.star, color: Colors.amber),
+    itemCount: 5,
+    itemSize: taille,
+    direction: Axis.horizontal,
+  );
+}
+
 // h1
 Widget h1(
   BuildContext context, {
   String texte = "Titre 1",
   Color couleur = Colors.black,
   int nbrDeLigneMax = 1,
+  bool gras = true,
 }) {
   return AutoSizeText(
     texte,
@@ -351,7 +396,7 @@ Widget h1(
     overflow: TextOverflow.ellipsis,
     style: TextStyle(
       fontSize: long(context, ratio: 0.045),
-      fontWeight: FontWeight.bold,
+      fontWeight: gras ? FontWeight.bold : FontWeight.normal,
       color: couleur,
     ),
   );
@@ -362,6 +407,7 @@ Widget h2(
   String texte = "Titre 2",
   Color couleur = Colors.black,
   int nbrDeLigneMax = 1,
+  bool gras = false,
 }) {
   return AutoSizeText(
     texte,
@@ -369,7 +415,7 @@ Widget h2(
     overflow: TextOverflow.ellipsis,
     style: TextStyle(
       fontSize: long(context, ratio: 0.04),
-      fontWeight: FontWeight.w700,
+      fontWeight: gras ? FontWeight.bold : FontWeight.w700,
       fontStyle: FontStyle.italic,
       color: couleur,
     ),
@@ -381,6 +427,7 @@ Widget h3(
   String texte = "Titre 3",
   Color couleur = Colors.black,
   int nbrDeLigneMax = 1,
+  bool gras = true,
 }) {
   return AutoSizeText(
     texte,
@@ -388,7 +435,7 @@ Widget h3(
     overflow: TextOverflow.ellipsis,
     style: TextStyle(
       fontSize: long(context, ratio: 0.035),
-      fontWeight: FontWeight.w600,
+      fontWeight: gras ? FontWeight.w600 : FontWeight.normal,
       color: couleur,
     ),
   );
@@ -399,6 +446,7 @@ Widget h4(
   String texte = "Titre 4",
   Color couleur = Colors.black,
   int nbrDeLigneMax = 1,
+  bool gras = false,
 }) {
   return AutoSizeText(
     texte,
@@ -406,7 +454,7 @@ Widget h4(
     overflow: TextOverflow.ellipsis,
     style: TextStyle(
       fontSize: long(context, ratio: 0.03),
-      fontWeight: FontWeight.w500,
+      fontWeight: gras ? FontWeight.bold : FontWeight.w500,
       color: couleur,
     ),
   );
@@ -417,6 +465,7 @@ Widget h5(
   String texte = "Titre 5",
   Color couleur = Colors.black,
   int nbrDeLigneMax = 1,
+  bool gras = false,
 }) {
   return AutoSizeText(
     texte,
@@ -435,6 +484,7 @@ Widget h6(
   String texte = "Titre 6",
   Color couleur = Colors.black,
   int nbrDeLigneMax = 1,
+  bool gras = false,
 }) {
   return AutoSizeText(
     texte,
@@ -442,7 +492,7 @@ Widget h6(
     overflow: TextOverflow.ellipsis,
     style: TextStyle(
       fontSize: long(context, ratio: 0.02),
-      fontWeight: FontWeight.w300,
+      fontWeight: gras ? FontWeight.bold : FontWeight.w300,
       color: couleur,
     ),
   );
@@ -453,6 +503,7 @@ Widget h7(
   String texte = "Titre 7",
   Color couleur = Colors.black,
   int nbrDeLigneMax = 1,
+  bool gras = false,
 }) {
   return AutoSizeText(
     texte,
@@ -460,7 +511,7 @@ Widget h7(
     overflow: TextOverflow.ellipsis,
     style: TextStyle(
       fontSize: long(context, ratio: 0.018),
-      fontWeight: FontWeight.w300,
+      fontWeight: gras ? FontWeight.bold : FontWeight.w300,
       color: couleur,
     ),
   );
@@ -471,6 +522,7 @@ Widget h8(
   String texte = "Titre 8",
   Color couleur = Colors.black,
   int nbrDeLigneMax = 1,
+  bool gras = false,
 }) {
   return AutoSizeText(
     texte,
@@ -478,7 +530,7 @@ Widget h8(
     overflow: TextOverflow.ellipsis,
     style: TextStyle(
       fontSize: long(context, ratio: 0.016),
-      fontWeight: FontWeight.w300,
+      fontWeight: gras ? FontWeight.bold : FontWeight.w300,
       color: couleur,
     ),
   );
@@ -489,6 +541,7 @@ Widget h9(
   String texte = "Titre 9",
   Color couleur = Colors.black,
   int nbrDeLigneMax = 1,
+  bool gras = false,
 }) {
   return AutoSizeText(
     texte,
@@ -496,7 +549,7 @@ Widget h9(
     overflow: TextOverflow.ellipsis,
     style: TextStyle(
       fontSize: long(context, ratio: 0.014),
-      fontWeight: FontWeight.w300,
+      fontWeight: gras ? FontWeight.bold : FontWeight.w300,
       color: couleur,
     ),
   );
@@ -507,6 +560,7 @@ Widget h10(
   String texte = "Titre 10",
   Color couleur = Colors.black,
   int nbrDeLigneMax = 1,
+  bool gras = false,
 }) {
   return AutoSizeText(
     texte,
@@ -514,8 +568,218 @@ Widget h10(
     overflow: TextOverflow.ellipsis,
     style: TextStyle(
       fontSize: long(context, ratio: 0.012),
-      fontWeight: FontWeight.w300,
+      fontWeight: gras ? FontWeight.bold : FontWeight.w300,
       color: couleur,
     ),
   );
+}
+
+class TexteClignotant extends StatefulWidget {
+  final String texte;
+  final TextStyle? style;
+  final Duration duree;
+
+  const TexteClignotant({
+    Key? key,
+    required this.texte,
+    this.style,
+    this.duree = const Duration(milliseconds: 500),
+  }) : super(key: key);
+
+  @override
+  _TexteClignotantState createState() => _TexteClignotantState();
+}
+
+class _TexteClignotantState extends State<TexteClignotant>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _opacityAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: widget.duree)
+      ..repeat(reverse: true); // fait clignoter indéfiniment
+
+    _opacityAnimation = Tween<double>(
+      begin: 1.0,
+      end: 0.3,
+    ).animate(_controller);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _opacityAnimation,
+      child: Text(
+        widget.texte,
+        style: widget.style ?? const TextStyle(fontSize: 16, color: Colors.red),
+      ),
+    );
+  }
+}
+
+class MenuContextuelAnime extends StatefulWidget {
+  final List<MenuAction> actions;
+
+  const MenuContextuelAnime({Key? key, required this.actions})
+    : super(key: key);
+
+  @override
+  State<MenuContextuelAnime> createState() => _MenuContextuelAnimeState();
+}
+
+class _MenuContextuelAnimeState extends State<MenuContextuelAnime>
+    with SingleTickerProviderStateMixin {
+  final GlobalKey _key = GlobalKey();
+  OverlayEntry? _overlayEntry;
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 200),
+      vsync: this,
+    );
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _overlayEntry?.remove();
+    super.dispose();
+  }
+
+  void _toggleMenu() {
+    if (_overlayEntry != null) {
+      _closeMenu();
+    } else {
+      _showMenu();
+    }
+  }
+
+  void _showMenu() {
+    RenderBox renderBox = _key.currentContext!.findRenderObject() as RenderBox;
+    Offset offset = renderBox.localToGlobal(Offset.zero);
+    Size size = renderBox.size;
+
+    _overlayEntry = OverlayEntry(
+      builder: (context) => Stack(
+        children: [
+          // ➤ Touche extérieure = fermeture du menu
+          GestureDetector(
+            onTap: _closeMenu,
+            behavior: HitTestBehavior.translucent,
+            child: Container(
+              width: MediaQuery.of(context).size.width,
+              height: MediaQuery.of(context).size.height,
+              color: Colors.transparent,
+            ),
+          ),
+
+          // ➤ Menu animé
+          Positioned(
+            top: offset.dy + size.height,
+            left: offset.dx - 100,
+            child: Material(
+              color: Colors.transparent,
+              child: ScaleTransition(
+                scale: CurvedAnimation(
+                  parent: _controller,
+                  curve: Curves.easeOutBack,
+                ),
+                child: FadeTransition(
+                  opacity: _controller,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    width: 160,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          blurRadius: 12,
+                          color: Colors.black26,
+                          offset: Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: widget.actions.map((action) {
+                        return InkWell(
+                          onTap: () {
+                            action.onTap();
+                            _closeMenu();
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 10,
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  action.icon,
+                                  color: action.couleur,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 10),
+                                Text(action.texte),
+                              ],
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    Overlay.of(context).insert(_overlayEntry!);
+    _controller.forward();
+  }
+
+  void _closeMenu() {
+    _controller.reverse().then((_) {
+      _overlayEntry?.remove();
+      _overlayEntry = null;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      key: _key,
+      onTap: _toggleMenu,
+      child: const Icon(Icons.more_vert, color: Colors.black),
+    );
+  }
+}
+
+// ➤ Classe pour chaque action du menu
+class MenuAction {
+  final String texte;
+  final IconData icon;
+  final Color couleur;
+  final VoidCallback onTap;
+
+  MenuAction({
+    required this.texte,
+    required this.icon,
+    required this.couleur,
+    required this.onTap,
+  });
 }
