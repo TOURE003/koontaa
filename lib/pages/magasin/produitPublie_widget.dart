@@ -5,6 +5,7 @@ import 'package:koontaa/functions/fonctions.dart';
 import 'package:koontaa/functions/storage.dart';
 import 'package:koontaa/pages/compte/connection/page_connection.dart';
 import 'package:koontaa/pages/magasin/ajoutDeProduit.dart';
+import 'package:koontaa/pages/magasin/page_article_magasin.dart';
 
 class ContProduitBoutiquePublie extends StatefulWidget {
   final Map<String, dynamic> data;
@@ -48,7 +49,18 @@ class _ContProduitBoutiquePublieState extends State<ContProduitBoutiquePublie> {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: () async {},
+        onTap: () async {
+          changePage(
+            context,
+            PageArticleMagasin(
+              title: "Article",
+              idArticle: widget.id,
+              nomBoutique: "Koontaa",
+              lienImageBoutique:
+                  "https://thumbs.dreamstime.com/b/boutique-34493816.jpg",
+            ),
+          );
+        },
 
         child: Container(
           height: long(context, ratio: 1 / 6),
@@ -153,6 +165,7 @@ class _ContProduitBoutiquePublieState extends State<ContProduitBoutiquePublie> {
                 padding: EdgeInsets.only(top: larg(context, ratio: 0.03)),
                 height: long(context, ratio: 1 / 6),
                 child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     h8(
                       context,
@@ -191,6 +204,22 @@ class _ContProduitBoutiquePublieState extends State<ContProduitBoutiquePublie> {
                               ),
                             ],
                           ),
+
+                    Row(
+                      children: [
+                        h9(
+                          context,
+                          texte: "Vendu :",
+                          couleur: const Color.fromARGB(102, 0, 0, 0),
+                        ),
+                        h8(
+                          context,
+                          texte: "12",
+                          couleur: const Color.fromARGB(102, 76, 175, 79),
+                          gras: true,
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),

@@ -47,6 +47,7 @@ class CloudFirestore {
 
   Stream<QuerySnapshot> lectureBdd(
     String collection, {
+
     Filter? filtreCompose, // utiliser Filter.and(...) ou Filter.or(...)
     List<dynamic>? orderBy,
     int limite = 1000000000,
@@ -70,6 +71,15 @@ class CloudFirestore {
       return query.snapshots();
     } catch (e) {
       print('Erreur Firestore : $e');
+      return const Stream.empty();
+    }
+  }
+
+  Stream<DocumentSnapshot> lectureBddDocU(String collection, String uid) {
+    try {
+      return _bdd.collection(collection).doc(uid).snapshots();
+    } catch (e) {
+      //print("Erreur Firestore : $e");
       return const Stream.empty();
     }
   }

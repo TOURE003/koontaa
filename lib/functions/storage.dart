@@ -7,8 +7,13 @@ import 'dart:convert';
 
 import 'package:crypto/crypto.dart';
 import 'package:koontaa/functions/cloud_firebase.dart';
+import 'package:path_provider/path_provider.dart';
 
-Future<Map<String, dynamic>> imageUser({bool camera = false}) async {
+import 'package:flutter_image_compress/flutter_image_compress.dart';
+
+import 'package:path/path.dart' as path;
+
+Future<Map<String, dynamic>> imageUser00({bool camera = false}) async {
   try {
     final picker = ImagePicker();
     final source = camera ? ImageSource.camera : ImageSource.gallery;
@@ -27,6 +32,45 @@ Future<Map<String, dynamic>> imageUser({bool camera = false}) async {
       return {"lien": "0", "image": null, "message": "autorisation"};
     } else {
       //print("Erreur lors de la sélection de l'image : $e");
+    }
+
+    return {"lien": "erreur", "image": null, "message": "erreur"};
+  }
+}
+
+Future<Map<String, dynamic>> imageUser({bool camera = false}) async {
+  try {
+    final picker = ImagePicker();
+    final source = camera ? ImageSource.camera : ImageSource.gallery;
+    final XFile? image = await picker.pickImage(source: source);
+
+    if (image == null) {
+      return {"lien": "0", "image": null, "message": "annule"};
+    }
+
+    // Chemin temporaire pour stocker l'image compressée
+    final dirTemp = await getTemporaryDirectory();
+    final ciblePath = path.join(
+      dirTemp.path,
+      "image_compressée_${DateTime.now().millisecondsSinceEpoch}.jpg",
+    );
+
+    final compressed = await FlutterImageCompress.compressAndGetFile(
+      image.path,
+      ciblePath,
+      quality: 50, // qualité entre 0 et 100
+    );
+
+    if (compressed == null) {
+      return {"lien": "0", "image": null, "message": "compression échouée"};
+    }
+
+    return {"lien": compressed.path, "image": compressed, "message": "ok"};
+  } catch (e) {
+    print(e);
+    if (e.toString().contains("access_denied") ||
+        e.toString().contains("Permission")) {
+      return {"lien": "0", "image": null, "message": "autorisation"};
     }
 
     return {"lien": "erreur", "image": null, "message": "erreur"};

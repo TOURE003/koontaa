@@ -46,7 +46,7 @@ dependencies:
   mailer: ^6.4.1
   image_picker: ^1.1.2
   http: ^1.4.0
-  path: ^1.8.3
+  path: ^1.9.1
   path_provider: ^2.1.2
   geolocator: ^14.0.1
   app_settings: ^6.1.1
@@ -60,6 +60,11 @@ dependencies:
   crypto: ^3.0.6
   convert: ^3.1.2
   flutter_rating_bar: ^4.0.1
+  smooth_page_indicator: ^1.2.1
+  flutter_image_compress: ^2.4.0
+  flutter_html: ^3.0.0
+  easy_comment: ^0.0.7
+   
 
 dev_dependencies:
   flutter_test:

@@ -1124,6 +1124,7 @@ void ajoutProduit(BuildContext context, Function setStating) async {
     "positionLocalite": [6.55, 7.55],
     "nomTemporaireProduit": nomProduitAjoutController.text,
     "nomPublique": "",
+    "description": "",
     "prixTemporaireProduit": prixProduitAjoutController.text,
     "prixPublique": "",
     "taillesVentementDisponibles": listeCocherTailleVetement,

@@ -1,0 +1,546 @@
+import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:koontaa/functions/cloud_firebase.dart';
+import 'package:koontaa/functions/fonctions.dart';
+import 'package:koontaa/pages/magasin/ajoutDeProduit.dart';
+import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+
+class PageArticleMagasin extends StatefulWidget {
+  final String idArticle;
+  final String lienImageBoutique;
+  final String nomBoutique;
+
+  const PageArticleMagasin({
+    super.key,
+    required this.title,
+    required this.idArticle,
+    required this.lienImageBoutique,
+    required this.nomBoutique,
+  });
+
+  final String title;
+
+  @override
+  State<PageArticleMagasin> createState() => _PageArticleMagasinState();
+}
+
+class _PageArticleMagasinState extends State<PageArticleMagasin> {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: couleurDeApp(),
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              height: long(context, ratio: 0.05),
+              width: long(context, ratio: 0.05),
+              decoration: BoxDecoration(
+                border: Border.all(),
+                borderRadius: BorderRadius.circular(1000),
+              ),
+              child: imageNetwork(
+                context,
+                widget.lienImageBoutique,
+                pleinW: true,
+                borderRadius: 1000,
+              ),
+            ),
+            SizedBox(width: larg(context, ratio: 0.03)),
+            h6(context, texte: widget.nomBoutique, gras: true),
+          ],
+        ),
+      ),
+      backgroundColor: couleurDeApp(),
+      body: StreamBuilder(
+        stream: CloudFirestore().lectureBddDocU("produits", widget.idArticle),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const CircularProgressIndicator();
+          }
+          if (snapshot.hasError) {
+            print('Erreur lors de la lecture ${snapshot.error}');
+            return Text('Erreur lors de la lecture ${snapshot.error}');
+          }
+
+          Map<String, dynamic>? data =
+              snapshot.data!.data() as Map<String, dynamic>?;
+
+          if (data == null) {
+            return Text('Erreur lors de la lecture ');
+          }
+
+          return SingleChildScrollView(
+            child: Column(
+              children: [
+                afficherImageNomArticle(context, data),
+                barreAviCommentaire(context),
+                afficheTailleSivettement(
+                  context,
+                  listeNomTaille,
+                  data["taillesVentementDisponibles"],
+                ),
+
+                affichePointureSiChaussure(
+                  context,
+                  listeNomPointure,
+                  data["pointuresChaussureDisponible"],
+                ),
+                descriptionPageArticleBoutique(context, data["description"]),
+              ],
+            ),
+          );
+        },
+      ),
+
+      bottomNavigationBar: BottomAppBar(
+        color: couleurDeApp(),
+        child: bouttonModifPageProduit(context),
+      ),
+    );
+  }
+}
+
+Widget afficherImageNomArticle(
+  BuildContext context,
+  Map<String, dynamic> data,
+) {
+  List res = [];
+  final don = data;
+
+  if (don["listeImagesPublique"].isEmpty) {
+    res.add(don["listeImagesTemporairesProduit"]);
+  } else {
+    res.add(don["listeImagesPublique"]);
+  }
+
+  if (don["nomPublique"] == "") {
+    res.add(don["nomTemporaireProduit"]);
+  } else {
+    res.add(don["nomPublique"]);
+  }
+
+  return Container(
+    //color: Color(0xFFBE4A00),
+    child: Column(
+      children: [
+        Container(
+          width: double.infinity,
+          margin: EdgeInsets.symmetric(horizontal: larg(context, ratio: 0.03)),
+          padding: EdgeInsets.all(larg(context, ratio: 0.016)),
+          decoration: BoxDecoration(
+            color: Color(0xFFBE4A00),
+            //borderRadius: BorderRadius.circular(5),
+          ),
+          //width: larg(context, ratio: 0.95),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              SizedBox(
+                //width: larg(context, ratio: 0.75 - (0.06)),
+                child: h5(context, texte: res[1], couleur: Colors.white),
+              ),
+              SizedBox(
+                //width: larg(context, ratio: 0.25 - (0.06)),
+                child: h5(
+                  context,
+                  texte: "${arg(data["prixTemporaireProduit"])} F",
+                  couleur: Colors.white,
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        SizedBox(height: long(context, ratio: 0.01)),
+        defilementImagesHorizontales(context, res[0]),
+      ],
+    ),
+  );
+}
+
+Widget defilementImagesHorizontales00(
+  BuildContext context,
+  List<dynamic> urlsImages,
+) {
+  final controller = PageController(
+    viewportFraction: 0.8,
+  ); // < 1 pour voir les côtés
+
+  return Container(
+    padding: EdgeInsets.symmetric(vertical: long(context, ratio: 0.008)),
+    color: Color.fromARGB(228, 137, 53, 1),
+    height: long(context, ratio: 0.5),
+    child: PageView.builder(
+      controller: controller,
+      itemCount: urlsImages.length,
+      scrollDirection: Axis.horizontal,
+      itemBuilder: (context, index) {
+        return AnimatedBuilder(
+          animation: controller,
+          builder: (context, child) {
+            return Container(
+              //color: Colors.red,
+              width: long(context, ratio: 0.3),
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: imageNetwork(
+                  context,
+                  urlsImages[index],
+                  pleinW: true,
+                  borderRadius: 6,
+                ),
+              ),
+            );
+          },
+        );
+      },
+    ),
+  );
+}
+
+Widget barreAviCommentaire(BuildContext context) {
+  return Container(
+    width: double.infinity,
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(5),
+    ),
+    padding: EdgeInsets.all(larg(context, ratio: 0.02)),
+    margin: EdgeInsets.symmetric(horizontal: larg(context, ratio: 0.05)),
+    child: Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Container(
+              padding: EdgeInsets.only(left: larg(context, ratio: 0.02)),
+              child: Row(
+                children: [
+                  Icon(
+                    FontAwesomeIcons.solidThumbsUp,
+                    size: larg(context, ratio: 0.025),
+                    color: Colors.lightBlue,
+                  ),
+                  SizedBox(width: larg(context, ratio: 0.01)),
+                  h9(context, texte: "12"),
+                ],
+              ),
+            ),
+            SizedBox(
+              child: Row(
+                children: [
+                  Row(
+                    children: [
+                      h8(context, texte: "12 "),
+                      h8(context, texte: "Commentaires"),
+                    ],
+                  ),
+                  SizedBox(width: larg(context, ratio: 0.01)),
+                  noteArticle(
+                    context,
+                    taille: larg(context, ratio: 0.03),
+                    note: 2.5,
+                    //modifiable: true,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                IconButton(
+                  onPressed: () {},
+                  icon: Icon(Icons.thumb_up_alt_outlined),
+                ),
+                h8(context, texte: "J'aime"),
+              ],
+            ),
+            Row(
+              children: [
+                IconButton(
+                  onPressed: () {},
+                  icon: Icon(FontAwesomeIcons.commentDots),
+                ),
+                h8(context, texte: "Commenter"),
+              ],
+            ),
+            Row(
+              children: [
+                IconButton(
+                  onPressed: () {},
+                  icon: Icon(FontAwesomeIcons.whatsapp),
+                ),
+                h8(context, texte: "Envoyer"),
+              ],
+            ),
+            Row(
+              children: [
+                IconButton(onPressed: () {}, icon: Icon(Icons.star_border)),
+                h8(context, texte: "Noter"),
+              ],
+            ),
+          ],
+        ),
+      ],
+    ),
+  );
+}
+
+Widget defilementImagesHorizontales(
+  BuildContext context,
+  List<dynamic> urlsImages,
+) {
+  final PageController controller = PageController(viewportFraction: 1);
+
+  return Column(
+    children: [
+      SizedBox(
+        height: long(context, ratio: 0.45),
+        child: PageView.builder(
+          controller: controller,
+          itemCount: urlsImages.length,
+          itemBuilder: (context, index) {
+            return AnimatedBuilder(
+              animation: controller,
+              builder: (context, child) {
+                double value = 1.0;
+
+                if (controller.position.haveDimensions) {
+                  value = controller.page! - index;
+                  value = (1 - (value.abs() * 0.2)).clamp(0.8, 1.0);
+                }
+
+                return Center(
+                  child: Transform.scale(
+                    scale: value,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: imageNetwork(
+                          context,
+                          urlsImages[index],
+                          pleinW: true,
+                          borderRadius: 6,
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+        ),
+      ),
+
+      const SizedBox(height: 10),
+
+      // ✅ Indicateurs (dots)
+      SmoothPageIndicator(
+        controller: controller,
+        count: urlsImages.length,
+        effect: WormEffect(
+          dotHeight: 8,
+          dotWidth: 8,
+          spacing: 8,
+          activeDotColor: Colors.orange,
+          dotColor: Colors.grey.shade400,
+        ),
+      ),
+    ],
+  );
+}
+
+Widget bouttonModifPageProduit(BuildContext context) {
+  return Container(
+    margin: EdgeInsets.symmetric(horizontal: larg(context, ratio: 0.02)),
+    width: double.infinity, // Prend toute la largeur disponible
+    child: TextButton.icon(
+      onPressed: () {},
+      icon: Icon(Icons.edit, color: Colors.white),
+      label: Text(
+        "Modifier",
+        style: TextStyle(
+          fontSize: larg(context, ratio: 0.03),
+          color: Colors.white,
+        ),
+      ),
+      style: TextButton.styleFrom(
+        backgroundColor: Color(0xFFBE4A00), // Couleur de fond
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10), // Bords arrondis
+          // Bordure
+        ),
+        padding: EdgeInsets.symmetric(vertical: 16), // Hauteur du bouton
+      ),
+    ),
+  );
+}
+
+Widget afficheTailleSivettement(
+  BuildContext context,
+  List taille,
+  List tablCoch,
+) {
+  if (!tablCoch.contains(true)) {
+    return SizedBox();
+  }
+
+  List<Widget> tabl = [];
+
+  for (var i = 0; i < tablCoch.length; i++) {
+    if (tablCoch[i]) {
+      tabl.add(
+        Container(
+          decoration: BoxDecoration(
+            //border: Border.all(),
+            color: Color.fromARGB(255, 231, 221, 205),
+          ),
+          //height: long(context, ratio: 0.04),
+          padding: EdgeInsets.all(larg(context, ratio: 0.01)),
+          margin: EdgeInsets.all(larg(context, ratio: 0.01)),
+          child: Center(
+            child: taille[i] == "S"
+                ? Icon(Icons.child_care)
+                : h9(context, texte: taille[i]),
+          ),
+          //width: larg(context, ratio: 0.05),
+        ),
+      );
+    }
+  }
+
+  return Column(
+    children: [
+      SizedBox(height: long(context, ratio: 0.03)),
+      Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(5),
+        ),
+        padding: EdgeInsets.all(larg(context, ratio: 0.02)),
+        margin: EdgeInsets.symmetric(horizontal: larg(context, ratio: 0.05)),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            h7(context, texte: "Tailles disponibles"),
+            SizedBox(
+              width: double.infinity,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(children: tabl),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ],
+  );
+}
+
+Widget affichePointureSiChaussure(
+  BuildContext context,
+  List taille,
+  List tablCoch,
+) {
+  if (!tablCoch.contains(true)) {
+    return SizedBox();
+  }
+
+  List<Widget> tabl = [];
+
+  for (var i = 0; i < tablCoch.length; i++) {
+    if (tablCoch[i]) {
+      tabl.add(
+        Container(
+          decoration: BoxDecoration(
+            //border: Border.all(),
+            color: Color.fromARGB(255, 231, 221, 205),
+          ),
+          //height: long(context, ratio: 0.04),
+          padding: EdgeInsets.all(larg(context, ratio: 0.01)),
+          margin: EdgeInsets.all(larg(context, ratio: 0.01)),
+          child: Center(
+            child: taille[i] == "S"
+                ? Icon(Icons.child_care)
+                : h9(context, texte: taille[i]),
+          ),
+          //width: larg(context, ratio: 0.05),
+        ),
+      );
+    }
+  }
+
+  return Column(
+    children: [
+      SizedBox(height: long(context, ratio: 0.02)),
+      Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(5),
+        ),
+        padding: EdgeInsets.all(larg(context, ratio: 0.02)),
+
+        margin: EdgeInsets.symmetric(horizontal: larg(context, ratio: 0.05)),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            h7(context, texte: "Pointures disponibles"),
+            SizedBox(
+              width: double.infinity,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(children: tabl),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ],
+  );
+}
+
+Widget descriptionPageArticleBoutique(
+  BuildContext context,
+  String description,
+) {
+  if (description.trim().isEmpty) {
+    return const SizedBox(); // Si vide, on ne montre rien
+  }
+
+  return Column(
+    children: [
+      SizedBox(height: long(context, ratio: 0.02)),
+      Container(
+        width: larg(context),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(5),
+        ),
+        padding: EdgeInsets.all(larg(context, ratio: 0.02)),
+        margin: EdgeInsets.symmetric(horizontal: larg(context, ratio: 0.05)),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            h7(context, texte: "Description"),
+            SizedBox(height: long(context, ratio: 0.01)),
+            /*h9(
+              context,
+              texte: description,
+              nbrDeLigneMax: 100, // assez grand pour ne pas couper
+            ),*/
+            html(description),
+          ],
+        ),
+      ),
+    ],
+  );
+}

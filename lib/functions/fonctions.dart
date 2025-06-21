@@ -10,6 +10,14 @@ import 'package:mailer/smtp_server.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 
+import 'package:flutter_html/flutter_html.dart';
+
+Widget html(String htmlCode, {Map<String, Style>? styleCss}) {
+  return SingleChildScrollView(
+    child: Html(data: htmlCode, style: styleCss ?? {}),
+  );
+}
+
 void changePage(BuildContext context, Widget page) {
   try {
     //Navigator.push(context, MaterialPageRoute(builder: (context) => page));
@@ -351,7 +359,7 @@ String arg(montant) {
 double valeurDeLaNOte = 5;
 Widget noteArticle(
   BuildContext context, {
-  note = 5,
+  double note = 5,
   bool modifiable = false,
   double taille = 20,
 }) {
