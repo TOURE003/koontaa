@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:koontaa/Commentaire/pageDeCommentaire.dart';
 import 'package:koontaa/functions/cloud_firebase.dart';
 import 'package:koontaa/functions/fonctions.dart';
 import 'package:koontaa/pages/magasin/ajoutDeProduit.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+//import 'package:comment_tree/widgets/comment_tree_widget.dart';
+import 'package:comment_tree/comment_tree.dart';
+
+//import 'package:comment_tree/data/comment.dart';
 
 class PageArticleMagasin extends StatefulWidget {
   final String idArticle;
@@ -71,24 +76,34 @@ class _PageArticleMagasinState extends State<PageArticleMagasin> {
             return Text('Erreur lors de la lecture ');
           }
 
-          return SingleChildScrollView(
-            child: Column(
-              children: [
-                afficherImageNomArticle(context, data),
-                barreAviCommentaire(context),
-                afficheTailleSivettement(
-                  context,
-                  listeNomTaille,
-                  data["taillesVentementDisponibles"],
-                ),
+          return SizedBox(
+            width: double.infinity,
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  afficherImageNomArticle(context, data),
+                  SizedBox(height: long(context, ratio: 0.03)),
+                  barreAviCommentaire(
+                    context,
+                    lienImageBotique: widget.lienImageBoutique,
+                    nomBoutique: widget.nomBoutique,
+                    idArticle: widget.idArticle,
+                  ),
 
-                affichePointureSiChaussure(
-                  context,
-                  listeNomPointure,
-                  data["pointuresChaussureDisponible"],
-                ),
-                descriptionPageArticleBoutique(context, data["description"]),
-              ],
+                  afficheTailleSivettement(
+                    context,
+                    listeNomTaille,
+                    data["taillesVentementDisponibles"],
+                  ),
+
+                  affichePointureSiChaussure(
+                    context,
+                    listeNomPointure,
+                    data["pointuresChaussureDisponible"],
+                  ),
+                  descriptionPageArticleBoutique(context, data["description"]),
+                ],
+              ),
             ),
           );
         },
@@ -201,15 +216,20 @@ Widget defilementImagesHorizontales00(
   );
 }
 
-Widget barreAviCommentaire(BuildContext context) {
+Widget barreAviCommentaire(
+  BuildContext context, {
+  String lienImageBotique = "",
+  String idArticle = "",
+  String nomBoutique = "",
+}) {
   return Container(
     width: double.infinity,
     decoration: BoxDecoration(
       color: Colors.white,
-      borderRadius: BorderRadius.circular(5),
+      //borderRadius: BorderRadius.circular(5),
     ),
     padding: EdgeInsets.all(larg(context, ratio: 0.02)),
-    margin: EdgeInsets.symmetric(horizontal: larg(context, ratio: 0.05)),
+    //margin: EdgeInsets.symmetric(horizontal: larg(context, ratio: 0.05)),
     child: Column(
       children: [
         Row(
@@ -266,7 +286,9 @@ Widget barreAviCommentaire(BuildContext context) {
             Row(
               children: [
                 IconButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    changePage(context, PageAvecChampFixe());
+                  },
                   icon: Icon(FontAwesomeIcons.commentDots),
                 ),
                 h8(context, texte: "Commenter"),
@@ -296,14 +318,15 @@ Widget barreAviCommentaire(BuildContext context) {
 
 Widget defilementImagesHorizontales(
   BuildContext context,
-  List<dynamic> urlsImages,
-) {
+  List<dynamic> urlsImages, {
+  double taillePrCent = 0.45,
+}) {
   final PageController controller = PageController(viewportFraction: 1);
 
   return Column(
     children: [
       SizedBox(
-        height: long(context, ratio: 0.45),
+        height: long(context, ratio: taillePrCent),
         child: PageView.builder(
           controller: controller,
           itemCount: urlsImages.length,
@@ -420,14 +443,14 @@ Widget afficheTailleSivettement(
 
   return Column(
     children: [
-      SizedBox(height: long(context, ratio: 0.03)),
+      //SizedBox(height: long(context, ratio: 0.03)),
       Container(
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(5),
+          //borderRadius: BorderRadius.circular(5),
         ),
         padding: EdgeInsets.all(larg(context, ratio: 0.02)),
-        margin: EdgeInsets.symmetric(horizontal: larg(context, ratio: 0.05)),
+        //margin: EdgeInsets.symmetric(horizontal: larg(context, ratio: 0.05)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -481,7 +504,7 @@ Widget affichePointureSiChaussure(
 
   return Column(
     children: [
-      SizedBox(height: long(context, ratio: 0.02)),
+      //SizedBox(height: long(context, ratio: 0.02)),
       Container(
         decoration: BoxDecoration(
           color: Colors.white,
@@ -489,7 +512,7 @@ Widget affichePointureSiChaussure(
         ),
         padding: EdgeInsets.all(larg(context, ratio: 0.02)),
 
-        margin: EdgeInsets.symmetric(horizontal: larg(context, ratio: 0.05)),
+        //margin: EdgeInsets.symmetric(horizontal: larg(context, ratio: 0.05)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -518,7 +541,7 @@ Widget descriptionPageArticleBoutique(
 
   return Column(
     children: [
-      SizedBox(height: long(context, ratio: 0.02)),
+      //SizedBox(height: long(context, ratio: 0.02)),
       Container(
         width: larg(context),
         decoration: BoxDecoration(
@@ -526,7 +549,7 @@ Widget descriptionPageArticleBoutique(
           borderRadius: BorderRadius.circular(5),
         ),
         padding: EdgeInsets.all(larg(context, ratio: 0.02)),
-        margin: EdgeInsets.symmetric(horizontal: larg(context, ratio: 0.05)),
+        // margin: EdgeInsets.symmetric(horizontal: larg(context, ratio: 0.05)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

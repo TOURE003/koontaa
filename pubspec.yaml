@@ -63,7 +63,9 @@ dependencies:
   smooth_page_indicator: ^1.2.1
   flutter_image_compress: ^2.4.0
   flutter_html: ^3.0.0
-  easy_comment: ^0.0.7
+  comment_tree: ^0.3.0
+
+ 
    
 
 dev_dependencies:
