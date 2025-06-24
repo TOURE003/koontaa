@@ -64,6 +64,9 @@ dependencies:
   flutter_image_compress: ^2.4.0
   flutter_html: ^3.0.0
   comment_tree: ^0.3.0
+  easy_comment: ^0.0.1
+  easy_post_v2: ^0.0.1
+  easyuser: ^0.0.5
 
  
    

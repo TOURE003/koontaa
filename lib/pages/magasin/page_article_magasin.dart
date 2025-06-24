@@ -287,7 +287,10 @@ Widget barreAviCommentaire(
               children: [
                 IconButton(
                   onPressed: () {
-                    changePage(context, PageAvecChampFixe());
+                    changePage(
+                      context,
+                      PageAvecChampFixe(idProduit: idArticle),
+                    );
                   },
                   icon: Icon(FontAwesomeIcons.commentDots),
                 ),
