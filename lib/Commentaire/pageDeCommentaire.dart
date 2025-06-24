@@ -3,76 +3,138 @@ import 'package:flutter/material.dart';
 import 'package:koontaa/Commentaire/widget_commentaire.dart';
 import 'package:koontaa/functions/cloud_firebase.dart';
 import 'package:koontaa/functions/firebase_auth.dart';
+import 'package:koontaa/functions/fonctions.dart';
 import 'package:koontaa/pages/compte/connection/page_connection.dart';
 import 'package:koontaa/pages/magasin/ajoutDeProduit.dart';
+import 'package:koontaa/pages/magasin/page_article_magasin.dart';
 
 class PageAvecChampFixe extends StatelessWidget {
   final String idProduit;
-  const PageAvecChampFixe({super.key, required this.idProduit});
+  final List<dynamic> urlImgProduit;
+  const PageAvecChampFixe({
+    super.key,
+    required this.idProduit,
+    required this.urlImgProduit,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Cette ligne permet de redimensionner le corps de la page quand le clavier s'affiche
       resizeToAvoidBottomInset: true,
-      appBar: AppBar(title: const Text('Commentaires')),
+
+      backgroundColor: couleurDeApp(),
+      // Cette ligne permet de redimensionner le corps de la page quand le clavier s'affiche
+      //resizeToAvoidBottomInset: true,
+      appBar: AppBar(
+        title: const Text('Commentaires'),
+        backgroundColor: Colors.deepOrange,
+      ),
       body: Stack(
         children: [
           // Le contenu principal de la page
           ListView(
             padding: const EdgeInsets.all(8),
-            children: [fenetreCommentaire(context, idProduit)],
+            children: [
+              defilementImagesHorizontales(context, urlImgProduit),
+              fenetreCommentaire(context, idProduit),
+              SizedBox(height: long(context, ratio: 0.08)),
+            ],
           ),
 
           // Le champ de saisie fixé en bas
           Align(
             alignment: Alignment.bottomCenter,
             child: SafeArea(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                color: Colors.grey.shade100,
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: textCommentaire,
-                        decoration: InputDecoration(
-                          hintText: "Écrire un commentaire...",
-                          filled: true,
-                          fillColor: Colors.white,
-                          contentPadding: const EdgeInsets.symmetric(
-                            vertical: 10,
-                            horizontal: 12,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(30),
-                            borderSide: BorderSide.none,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  ValueListenableBuilder<int>(
+                    valueListenable: rangCommentaire,
+                    builder: (context, value, child) {
+                      if (value == 0) return const SizedBox();
+
+                      return Container(
+                        //margin: const EdgeInsets.only(bottom: 8),
+                        /*padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),*/
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade200,
+                          //borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                "Répondre à ${controlRepondreAvide.text}",
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: () {
+                                rangCommentaire.value = 0;
+                                controlRepondreAvide.clear();
+                              },
+                              icon: const Icon(Icons.close, color: Colors.grey),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 6,
+                    ),
+                    color: Colors.grey.shade100,
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: textCommentaire,
+                            decoration: InputDecoration(
+                              hintText: "Écrire un commentaire...",
+                              filled: true,
+                              fillColor: Colors.white,
+                              contentPadding: const EdgeInsets.symmetric(
+                                vertical: 10,
+                                horizontal: 12,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(30),
+                                borderSide: BorderSide.none,
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    IconButton(
-                      icon: const Icon(Icons.send),
-                      onPressed: () async {
-                        if (textCommentaire.text != "") {
-                          if (!await ajouterCommentairePrincipal(
-                            context,
-                            idProduit,
-                            textCommentaire.text,
-                          )) {
-                            messageErreurBar(
-                              context,
-                              messageErr: "Une erreur est survénu",
-                            );
-                          }
-                        }
+                        const SizedBox(width: 8),
+                        IconButton(
+                          icon: const Icon(Icons.send),
+                          onPressed: () async {
+                            if (textCommentaire.text != "") {
+                              if (!await ajouterCommentairePrincipal(
+                                context,
+                                idProduit,
+                                textCommentaire.text,
+                              )) {
+                                messageErreurBar(
+                                  context,
+                                  messageErr: "Une erreur est survénu",
+                                );
+                              }
+                            }
 
-                        // Envoyer le message ici
-                      },
+                            // Envoyer le message ici
+                          },
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -103,7 +165,7 @@ final responses = [
 
 /// Fonction qui construit un widget de commentaire avec ses réponses
 Widget buildCommentWithReplies({
-  required Map<String, String> parentComment,
+  required Map<String, dynamic> parentComment,
   required List<Map<String, dynamic>> replies,
 }) {
   return Column(
@@ -125,18 +187,77 @@ Widget buildCommentWithReplies({
                 Text(
                   parentComment['username'] ?? 'Utilisateur',
                   style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
+                    //fontWeight: FontWeight.bold,
+                    fontSize: 12,
                   ),
                 ),
                 const SizedBox(height: 4),
-                Column(
+
+                // Texte du commentaire
+                Text(
+                  parentComment['comment'] ?? '',
+                  style: const TextStyle(fontSize: 16),
+                ),
+                const SizedBox(height: 6),
+
+                // LIGNE INFÉRIEURE : Heure - J'aime - Répondre
+                Row(
                   children: [
+                    // Heure
                     Text(
-                      parentComment['comment'] ?? '',
-                      style: const TextStyle(fontSize: 14),
+                      formaterDateHeure(parentComment['dateTime'] as Timestamp),
+                      style: TextStyle(
+                        color: Colors.grey.shade600,
+                        fontSize: 12,
+                      ),
                     ),
-                    TextButton(onPressed: () {}, child: Text("Répondre")),
+                    const SizedBox(width: 16),
+
+                    // Bouton J'aime
+                    TextButton(
+                      onPressed: () {
+                        // à implémenter : ajout du like
+                      },
+                      style: TextButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        minimumSize: const Size(40, 20),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        visualDensity: VisualDensity.compact,
+                      ),
+                      child: const Text(
+                        'J’aime',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.blue,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 5),
+                    // Bouton Répondre
+                    TextButton(
+                      onPressed: () {
+                        rangCommentaire.value = 1;
+                        controlRepondreAvide.text =
+                            parentComment['username'] ?? 'Utilisateur';
+                        idCommentairePrincipaleRepondu =
+                            parentComment['id'] ?? '';
+                      },
+                      style: TextButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        minimumSize: const Size(40, 20),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        visualDensity: VisualDensity.compact,
+                      ),
+                      child: const Text(
+                        'Répondre',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.blue,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ],
@@ -166,14 +287,14 @@ Widget buildCommentWithReplies({
                     Text(
                       reply['username'] ?? 'Utilisateur',
                       style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
+                        //fontWeight: FontWeight.bold,
+                        fontSize: 12,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       reply['comment'] ?? '',
-                      style: const TextStyle(fontSize: 13),
+                      style: const TextStyle(fontSize: 14),
                     ),
                   ],
                 ),
@@ -206,14 +327,19 @@ Widget fenetreCommentaire(BuildContext context, String idProduit) {
         return const Text('Aucun commentaire trouvé');
       }
 
-      final docs = snapshot.data!.docs;
+      final docs = CloudFirestore().trierDocs(snapshot.data!.docs, [
+        "dateTime",
+        true,
+      ]);
 
       final widgets = docs.map((doc) {
         final data = doc.data() as Map<String, dynamic>;
-        final Map<String, String> parent = {
+        final Map<String, dynamic> parent = {
           'avatar': data["avatar"] ?? '',
           'username': data["nomUser"] ?? '',
           'comment': data["commentaire"] ?? '',
+          "id": doc.id,
+          "dateTime": data["dateTime"],
         };
 
         return StreamBuilder(
@@ -232,7 +358,10 @@ Widget fenetreCommentaire(BuildContext context, String idProduit) {
               return Text('Erreur réponse : ${snapshot0.error}');
             }
 
-            final docs0 = snapshot0.data?.docs ?? [];
+            final docs0 = CloudFirestore().trierDocs(snapshot0.data!.docs, [
+              "dateTime",
+              true,
+            ]);
 
             List<Map<String, dynamic>> reponse = docs0.map((doc0) {
               final data0 = doc0.data() as Map<String, dynamic>;
@@ -243,9 +372,17 @@ Widget fenetreCommentaire(BuildContext context, String idProduit) {
               };
             }).toList();
 
-            return buildCommentWithReplies(
-              parentComment: parent,
-              replies: reponse,
+            return Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              padding: EdgeInsets.all(5),
+              margin: EdgeInsets.all(6),
+              child: buildCommentWithReplies(
+                parentComment: parent,
+                replies: reponse,
+              ),
             );
           },
         );
@@ -262,7 +399,7 @@ Widget fenetreCommentaire(BuildContext context, String idProduit) {
 
 TextEditingController controlRepondreAvide = TextEditingController();
 TextEditingController textCommentaire = TextEditingController();
-int rangCommentaire = 0;
+ValueNotifier<int> rangCommentaire = ValueNotifier(0);
 
 String idCommentairePrincipaleRepondu = "";
 String nomRepondu = "";
@@ -292,7 +429,7 @@ Future<bool> ajouterCommentairePrincipal(
   }
 
   Map<String, dynamic> comm = {};
-  if (rangCommentaire == 0) {
+  if (rangCommentaire.value == 0) {
     comm = {
       "idProduits": idProduits,
       "idUser": AuthFirebase().currentUser?.uid,
@@ -305,7 +442,7 @@ Future<bool> ajouterCommentairePrincipal(
       "commentaire": commentaire,
       "dateTime": await dd(),
     };
-  } else if (rangCommentaire == 1) {
+  } else if (rangCommentaire.value == 1) {
     comm = {
       "idProduits": idProduits,
       "idUser": AuthFirebase().currentUser?.uid,
@@ -320,7 +457,7 @@ Future<bool> ajouterCommentairePrincipal(
 
       "dateTime": await dd(),
     };
-  } else if (rangCommentaire == 2) {
+  } else if (rangCommentaire.value == 2) {
     comm = {
       "idProduits": idProduits,
       "idUser": AuthFirebase().currentUser?.uid,
@@ -337,10 +474,22 @@ Future<bool> ajouterCommentairePrincipal(
     };
   }
 
-  rangCommentaire = 0;
+  rangCommentaire.value = 0;
   controlRepondreAvide.clear();
 
   print(comm);
 
   return await CloudFirestore().ajoutBdd("commentaires", comm);
+}
+
+String formaterDateHeure(Timestamp timestamp) {
+  final date = timestamp.toDate();
+  final now = DateTime.now();
+  final diff = now.difference(date);
+
+  if (diff.inMinutes < 1) return "À l’instant";
+  if (diff.inMinutes < 60) return "${diff.inMinutes} min";
+  if (diff.inHours < 24) return "${diff.inHours} h";
+  if (diff.inDays == 1) return "Hier";
+  return "${date.day}/${date.month}/${date.year}";
 }

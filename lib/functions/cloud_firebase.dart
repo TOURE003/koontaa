@@ -117,6 +117,42 @@ class CloudFirestore {
     return await query.get();
   }
 
+  List<QueryDocumentSnapshot> trierDocs(
+    List<QueryDocumentSnapshot> docs,
+    List<dynamic>? orderBy,
+  ) {
+    if (orderBy == null || orderBy.length != 2) return docs;
+
+    final String champ = orderBy[0];
+    final bool descending = orderBy[1] == true;
+
+    docs.sort((a, b) {
+      final dataA = a.data() as Map<String, dynamic>?;
+      final dataB = b.data() as Map<String, dynamic>?;
+
+      dynamic aVal = dataA?[champ];
+      dynamic bVal = dataB?[champ];
+
+      // Convertir Timestamp en DateTime pour assurer une comparaison correcte
+      if (aVal is Timestamp) aVal = aVal.toDate();
+      if (bVal is Timestamp) bVal = bVal.toDate();
+
+      // Gérer les valeurs nulles
+      if (aVal == null && bVal == null) return 0;
+      if (aVal == null) return descending ? 1 : -1;
+      if (bVal == null) return descending ? -1 : 1;
+
+      // Comparaison générique pour tout type Comparable
+      if (aVal is Comparable && bVal is Comparable) {
+        return descending ? bVal.compareTo(aVal) : aVal.compareTo(bVal);
+      }
+
+      return 0;
+    });
+
+    return docs;
+  }
+
   Future<bool> modif(
     String collection,
     String idDoc,

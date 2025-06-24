@@ -83,8 +83,10 @@ class _PageArticleMagasinState extends State<PageArticleMagasin> {
                 children: [
                   afficherImageNomArticle(context, data),
                   SizedBox(height: long(context, ratio: 0.03)),
+
                   barreAviCommentaire(
                     context,
+                    data,
                     lienImageBotique: widget.lienImageBoutique,
                     nomBoutique: widget.nomBoutique,
                     idArticle: widget.idArticle,
@@ -217,7 +219,8 @@ Widget defilementImagesHorizontales00(
 }
 
 Widget barreAviCommentaire(
-  BuildContext context, {
+  BuildContext context,
+  Map<String, dynamic> data, {
   String lienImageBotique = "",
   String idArticle = "",
   String nomBoutique = "",
@@ -289,7 +292,12 @@ Widget barreAviCommentaire(
                   onPressed: () {
                     changePage(
                       context,
-                      PageAvecChampFixe(idProduit: idArticle),
+                      PageAvecChampFixe(
+                        idProduit: idArticle,
+                        urlImgProduit: data["listeImagesPublique"].isEmpty
+                            ? data["listeImagesTemporairesProduit"]
+                            : data["listeImagesPublique"],
+                      ),
                     );
                   },
                   icon: Icon(FontAwesomeIcons.commentDots),
