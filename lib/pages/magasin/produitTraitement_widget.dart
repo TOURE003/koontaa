@@ -115,7 +115,9 @@ class _ContProduitBoutiqueTraitementState
                 height: long(context, ratio: 1 / 7),
                 child: imageNetwork(
                   context,
-                  widget.data["listeImagesTemporairesProduit"][0],
+                  widget.data["listeImagesTemporairesProduit"].isEmpty
+                      ? ""
+                      : widget.data["listeImagesTemporairesProduit"][0],
                   borderRadius: larg(context, ratio: 0.02),
                 ),
               ),

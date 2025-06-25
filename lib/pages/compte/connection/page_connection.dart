@@ -869,7 +869,7 @@ Widget bouttonContinueAvecGoogle(Function setSeting, BuildContext context) {
                   final phoneRegex = RegExp(r'^(0[0-9]{9}|\+225[0-9]{10})$');
                   Map<String, dynamic> donne;
                   if (data.containsKey('phone')) {
-                    if (phoneRegex.hasMatch(data["phone"])) {
+                    if (phoneRegex.hasMatch(data["phone"] ?? "")) {
                       donne = {"mail": auth.email, "nom": auth.displayName};
                     } else {
                       donne = {
@@ -979,7 +979,7 @@ Widget bouttonContinueAvecFaceBook(Function setStating, BuildContext context) {
                   final emailRegex = RegExp(r"^[\w\.-]+@[\w\.-]+\.\w+$");
                   Map<String, dynamic> donne;
                   if (data.containsKey('phone')) {
-                    if (phoneRegex.hasMatch(data["phone"])) {
+                    if (phoneRegex.hasMatch(data["phone"] ?? "")) {
                       donne = {"nom": auth.displayName};
                     } else {
                       donne = {
