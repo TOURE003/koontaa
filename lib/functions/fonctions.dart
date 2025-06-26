@@ -304,6 +304,18 @@ Widget imageNetwork(
   double borderRadius = 5,
   bool pleinW = true,
 }) {
+  if (lienImage.contains("assets")) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(borderRadius), // ajuste le rayon ici
+      child: Image.asset(
+        lienImage,
+        fit: pleinW
+            ? BoxFit.cover
+            : BoxFit.contain, // optionnel, pour remplir le conteneur proprement
+      ),
+    );
+  }
+
   return StreamBuilder<bool>(
     stream: etaConection,
     builder: (context, snapshot) {

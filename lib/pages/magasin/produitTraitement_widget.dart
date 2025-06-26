@@ -87,6 +87,7 @@ class _ContProduitBoutiqueTraitementState
           idProduitsModifie = widget.id;
 
           if (!await CloudFirestore().checkConnexionFirestore()) {
+            setState(() => enChargement = false);
             messageErreurBar(context, messageErr: "Vérifiez votreconnection !");
             return;
           }

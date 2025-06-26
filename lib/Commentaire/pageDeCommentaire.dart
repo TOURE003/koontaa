@@ -46,6 +46,7 @@ class _PageAvecChampFixeState extends State<PageAvecChampFixe> {
             padding: const EdgeInsets.all(8),
             children: [
               defilementImagesHorizontales(context, widget.urlImgProduit),
+              barreinfo(),
               fenetreCommentaire(
                 context,
                 () {
@@ -67,118 +68,9 @@ class _PageAvecChampFixeState extends State<PageAvecChampFixe> {
   }
 }
 
-/*Widget fenetreCommentaire00(
-  BuildContext context,
-  String idProduit,
-  Map<String, GlobalKey> commentKeys,
-  ScrollController scrollController,
-) {
-  return StreamBuilder(
-    stream: CloudFirestore().lectureBdd(
-      "commentaires",
-      filtreCompose: cd("idProduits", idProduit),
-    ),
-    builder: (context, snapshot) {
-      if (snapshot.hasError) {
-        return Text('Erreur : \${snapshot.error}');
-      }
-
-      if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-        return const Text('Aucun commentaire trouvé');
-      }
-
-      final docs = CloudFirestore().trierDocs(snapshot.data!.docs, [
-        "dateTime",
-        true,
-      ]);
-
-      final List<Map<String, dynamic>> parents = [];
-      final Map<String, List<Map<String, dynamic>>> mapReponses = {};
-
-      for (final doc in docs) {
-        final data = doc.data() as Map<String, dynamic>;
-        final commentaire = {
-          'id': doc.id,
-          'avatar': data["avatar"] ?? '',
-          'username': data["nomUser"] ?? '',
-          'comment': data["commentaire"] ?? '',
-          'dateTime': data["dateTime"],
-        };
-
-        if (data["principal"] == true) {
-          parents.add(commentaire);
-        } else {
-          final idParent = data["idCommentaireParent"];
-          mapReponses.putIfAbsent(idParent, () => []).add(commentaire);
-        }
-      }
-
-      return ListView(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        children: parents.map((parent) {
-          final List<Map<String, dynamic>> replies =
-              mapReponses[parent["id"]] ?? [];
-
-          commentKeys.putIfAbsent(parent["id"], () => GlobalKey());
-
-          return Container(
-            key: commentKeys[parent["id"]],
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            padding: const EdgeInsets.all(5),
-            margin: const EdgeInsets.all(6),
-            child: buildCommentWithReplies(
-              context,
-              parentComment: parent,
-              replies: replies,
-              onReplyTap: () async {
-                rangCommentaire.value = 1;
-                controlRepondreAvide.text = parent["username"];
-                idCommentairePrincipaleRepondu = parent["id"];
-
-                final key = commentKeys[parent["id"]];
-                if (key != null && key.currentContext != null) {
-                  final box =
-                      key.currentContext!.findRenderObject() as RenderBox;
-                  final offset = box.localToGlobal(Offset.zero).dy;
-                  final topOffset =
-                      MediaQuery.of(context).padding.top + kToolbarHeight;
-                  await scrollController.animateTo(
-                    scrollController.offset + offset - topOffset - 10,
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeInOut,
-                  );
-                }
-              },
-            ),
-          );
-        }).toList(),
-      );
-    },
-  );
-}*/
-
-final parent = {
-  'avatar': 'https://example.com/avatar_parent.png',
-  'username': 'ParentUser',
-  'comment': 'Ceci est le commentaire principal.',
-};
-
-final responses = [
-  {
-    'avatar': 'https://example.com/avatar1.png',
-    'username': 'Répondeur1',
-    'comment': 'Voici une réponse.',
-  },
-  {
-    'avatar': 'https://example.com/avatar2.png',
-    'username': 'Répondeur2',
-    'comment': 'Une autre réponse.',
-  },
-];
+Widget barreinfo() {
+  return Text("data");
+}
 
 Widget fenetreCommentaire(
   BuildContext context,
@@ -198,7 +90,7 @@ Widget fenetreCommentaire(
       }
 
       if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-        return const Text('Aucun commentaire trouvé');
+        return commentaireParDefaut(context);
       }
 
       final docs = CloudFirestore().trierDocs(snapshot.data!.docs, [
@@ -499,6 +391,58 @@ Widget buildCommentWithReplies(
   );
 }
 
+Widget commentaireParDefaut(BuildContext context) {
+  return Container(
+    margin: EdgeInsets.only(top: long(context, ratio: 0.06)),
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(10),
+    ),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Avatar circulaire
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            image: DecorationImage(
+              image: AssetImage("assets/images/pakooTete01.png"),
+              fit: BoxFit.cover,
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+
+        // Texte et bouton
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text("Pakoo", style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 4),
+              Text(
+                "Soyez le premier à donner votre avis ! Partagez votre expérience ou posez une question sur ce produit.",
+                style: TextStyle(color: Colors.black87),
+              ),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: () {
+                  focusNodeCommentaire.requestFocus();
+                },
+                style: TextButton.styleFrom(padding: EdgeInsets.zero),
+                child: Text("Répondre", style: TextStyle(color: Colors.blue)),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
 final FocusNode focusNodeCommentaire = FocusNode();
 bool isloading = false;
 Map<String, dynamic> image = {
@@ -523,7 +467,8 @@ Widget clavierDuBas(
               if (value == 0) return const SizedBox();
 
               return Container(
-                decoration: BoxDecoration(color: Colors.grey.shade200),
+                padding: EdgeInsets.only(left: 20),
+                decoration: BoxDecoration(color: Colors.white),
                 child: Row(
                   children: [
                     Expanded(
