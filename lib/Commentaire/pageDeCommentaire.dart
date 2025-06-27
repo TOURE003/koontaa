@@ -11,6 +11,7 @@ import 'package:koontaa/functions/storage.dart';
 import 'package:koontaa/pages/compte/connection/page_connection.dart';
 import 'package:koontaa/pages/magasin/ajoutDeProduit.dart';
 import 'package:koontaa/pages/magasin/page_article_magasin.dart';
+import 'package:flutter_reaction_button/flutter_reaction_button.dart';
 
 class PageAvecChampFixe extends StatefulWidget {
   final String idProduit;
@@ -46,7 +47,8 @@ class _PageAvecChampFixeState extends State<PageAvecChampFixe> {
             padding: const EdgeInsets.all(8),
             children: [
               defilementImagesHorizontales(context, widget.urlImgProduit),
-              barreinfo(),
+              SizedBox(height: 20),
+              superpositionAvecDecalage(),
               fenetreCommentaire(
                 context,
                 () {
@@ -68,8 +70,108 @@ class _PageAvecChampFixeState extends State<PageAvecChampFixe> {
   }
 }
 
-Widget barreinfo() {
-  return Text("data");
+Widget barreinfo(BuildContext context) {
+  return Container(
+    padding: EdgeInsets.all(10),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(5),
+    ),
+    child: Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            Container(
+              child: Row(
+                children: [
+                  TextButton(
+                    onPressed: () {},
+                    child: Row(children: [boutonLike()]),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              child: Row(
+                children: [
+                  TextButton(
+                    onPressed: () {},
+                    child: Row(
+                      children: [
+                        Icon(Icons.comment, size: 15),
+                        SizedBox(width: 5),
+                        h9(context, texte: "Commenter"),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              child: Row(
+                children: [
+                  TextButton(
+                    onPressed: () {},
+                    child: Row(
+                      children: [
+                        Icon(Icons.phone, size: 15),
+                        SizedBox(width: 5),
+                        h9(context, texte: "Contacter"),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              child: Row(
+                children: [
+                  TextButton(
+                    onPressed: () {},
+                    child: Row(
+                      children: [
+                        Icon(Icons.share, size: 15),
+                        SizedBox(width: 5),
+                        h9(context, texte: "Partager"),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            Container(
+              //margin: EdgeInsets.only(left: 30),
+              child: Row(
+                children: [
+                  Icon(Icons.favorite, size: 15),
+                  h8(context, texte: "15"),
+                ],
+              ),
+            ),
+            Container(
+              margin: EdgeInsets.only(left: 30),
+              child: noteArticle(context, note: 2.5),
+            ),
+            Container(
+              margin: EdgeInsets.only(left: 30),
+              child: Row(
+                children: [
+                  h8(context, texte: "15 "),
+                  h8(context, texte: "Commentaires"),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ],
+    ),
+  );
 }
 
 Widget fenetreCommentaire(
@@ -111,6 +213,7 @@ Widget fenetreCommentaire(
           'dateTime': data["dateTime"],
           "lienImageCommentaire": data["lienImageCommentaire"] ?? "",
           "idUser": data["idUser"] ?? '',
+          "jaimes": data["jaimes"] ?? [],
         };
 
         if (data["principal"] == true) {
@@ -121,57 +224,62 @@ Widget fenetreCommentaire(
         }
       }
 
-      return ListView(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        children: parents.map((parent) {
-          final List<Map<String, dynamic>> replies =
-              mapReponses[parent["id"]] ?? [];
+      return Column(
+        children: [
+          barreinfo(context),
+          Column(
+            //shrinkWrap: true,
+            // physics: const NeverScrollableScrollPhysics(),
+            children: parents.map((parent) {
+              final List<Map<String, dynamic>> replies =
+                  mapReponses[parent["id"]] ?? [];
 
-          commentKeys.putIfAbsent(parent["id"], () => GlobalKey());
+              commentKeys.putIfAbsent(parent["id"], () => GlobalKey());
 
-          return Container(
-            key: commentKeys[parent["id"]],
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            padding: const EdgeInsets.all(5),
-            margin: const EdgeInsets.all(6),
-            child: buildCommentWithReplies(
-              context,
-              setStating,
-              parentComment: parent,
-              replies: replies,
-              onReplyTap: () async {
-                rangCommentaire.value = 1;
-                controlRepondreAvide.text = parent["username"];
-                idCommentairePrincipaleRepondu = parent["id"];
-                setStating();
-                focusNodeCommentaire.unfocus();
-                focusNodeCommentaire.requestFocus();
+              return Container(
+                key: commentKeys[parent["id"]],
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                padding: const EdgeInsets.all(5),
+                margin: const EdgeInsets.all(6),
+                child: buildCommentWithReplies(
+                  context,
+                  setStating,
+                  parentComment: parent,
+                  replies: replies,
+                  onReplyTap: () async {
+                    rangCommentaire.value = 1;
+                    controlRepondreAvide.text = parent["username"];
+                    idCommentairePrincipaleRepondu = parent["id"];
+                    setStating();
+                    focusNodeCommentaire.unfocus();
+                    focusNodeCommentaire.requestFocus();
 
-                final key = commentKeys[parent["id"]];
-                if (key != null && key.currentContext != null) {
-                  final box =
-                      key.currentContext!.findRenderObject() as RenderBox;
-                  final offset = box.localToGlobal(Offset.zero).dy;
-                  final topOffset =
-                      MediaQuery.of(context).padding.top + kToolbarHeight;
-                  await scrollController.animateTo(
-                    scrollController.offset + offset - topOffset - 30,
-                    duration: const Duration(milliseconds: 1000),
-                    curve: Curves.easeInOut,
-                  );
-                }
+                    final key = commentKeys[parent["id"]];
+                    if (key != null && key.currentContext != null) {
+                      final box =
+                          key.currentContext!.findRenderObject() as RenderBox;
+                      final offset = box.localToGlobal(Offset.zero).dy;
+                      final topOffset =
+                          MediaQuery.of(context).padding.top + kToolbarHeight;
+                      await scrollController.animateTo(
+                        scrollController.offset + offset - topOffset - 30,
+                        duration: const Duration(milliseconds: 1000),
+                        curve: Curves.easeInOut,
+                      );
+                    }
 
-                //FocusScope.of(context).unfocus();
+                    //FocusScope.of(context).unfocus();
 
-                //focusNodeCommentaire.
-              },
-            ),
-          );
-        }).toList(),
+                    //focusNodeCommentaire.
+                  },
+                ),
+              );
+            }).toList(),
+          ),
+        ],
       );
     },
   );
@@ -257,7 +365,37 @@ Widget buildCommentWithReplies(
                       ),
                       const SizedBox(width: 16),
                       TextButton(
-                        onPressed: () {},
+                        onPressed: () async {
+                          if (AuthFirebase().currentUser == null) {
+                            messageErreurBar(
+                              context,
+                              messageErr: "Vous n'êtes pas connecté",
+                            );
+                            return;
+                          }
+                          List tabJaime = parentComment["jaimes"] ?? [];
+                          print(tabJaime);
+
+                          //kkk.contains(element)
+                          if (!tabJaime.contains(
+                            AuthFirebase().currentUser!.uid,
+                          )) {
+                            tabJaime.add(AuthFirebase().currentUser!.uid);
+                            CloudFirestore().modif(
+                              "commentaires",
+                              parentComment["id"],
+                              {"jaimes": tabJaime},
+                            );
+                          } else {
+                            print("object");
+                            tabJaime.remove(AuthFirebase().currentUser!.uid);
+                            CloudFirestore().modif(
+                              "commentaires",
+                              parentComment["id"],
+                              {"jaimes": tabJaime},
+                            );
+                          }
+                        },
                         style: TextButton.styleFrom(
                           padding: EdgeInsets.zero,
                           minimumSize: const Size(40, 20),
@@ -283,6 +421,19 @@ Widget buildCommentWithReplies(
                           style: TextStyle(fontSize: 13, color: Colors.blue),
                         ),
                       ),
+                      SizedBox(width: larg(context, ratio: 0.25)),
+                      parentComment["jaimes"].length == 0
+                          ? SizedBox()
+                          : Row(
+                              children: [
+                                Icon(Icons.thumb_up_alt_outlined, size: 15),
+                                SizedBox(width: 5),
+                                h9(
+                                  context,
+                                  texte: "${parentComment["jaimes"].length}",
+                                ),
+                              ],
+                            ),
                     ],
                   ),
                 ],
@@ -362,7 +513,37 @@ Widget buildCommentWithReplies(
                           ),
                           const SizedBox(width: 6),
                           TextButton(
-                            onPressed: () {},
+                            onPressed: () async {
+                              if (AuthFirebase().currentUser == null) {
+                                messageErreurBar(
+                                  context,
+                                  messageErr: "Vous n'êtes pas connecté",
+                                );
+                                return;
+                              }
+                              List tabJaime = reply["jaimes"] ?? [];
+
+                              //kkk.contains(element)
+                              if (!tabJaime.contains(
+                                AuthFirebase().currentUser!.uid,
+                              )) {
+                                tabJaime.add(AuthFirebase().currentUser!.uid);
+                                CloudFirestore().modif(
+                                  "commentaires",
+                                  reply["id"],
+                                  {"jaimes": tabJaime},
+                                );
+                              } else {
+                                tabJaime.remove(
+                                  AuthFirebase().currentUser!.uid,
+                                );
+                                CloudFirestore().modif(
+                                  "commentaires",
+                                  reply["id"],
+                                  {"jaimes": tabJaime},
+                                );
+                              }
+                            },
                             style: TextButton.styleFrom(
                               padding: EdgeInsets.zero,
                               minimumSize: const Size(40, 20),
@@ -377,6 +558,20 @@ Widget buildCommentWithReplies(
                               ),
                             ),
                           ),
+
+                          SizedBox(width: larg(context, ratio: 0.25)),
+                          reply["jaimes"].length == 0
+                              ? SizedBox()
+                              : Row(
+                                  children: [
+                                    Icon(Icons.thumb_up_alt_outlined, size: 15),
+                                    SizedBox(width: 5),
+                                    h9(
+                                      context,
+                                      texte: "${reply["jaimes"].length}",
+                                    ),
+                                  ],
+                                ),
                         ],
                       ),
                     ],
@@ -672,6 +867,7 @@ Future<bool> ajouterCommentairePrincipal(
       "commentaire": commentaire,
       "lienImageCommentaire": lienImageCommentaire,
       "dateTime": await dd(),
+      "jaimes": [],
     };
   } else if (rangCommentaire.value == 1) {
     comm = {
@@ -687,6 +883,7 @@ Future<bool> ajouterCommentairePrincipal(
       "commentaire": commentaire,
       "lienImageCommentaire": lienImageCommentaire,
       "dateTime": await dd(),
+      "jaimes": [],
     };
   } else if (rangCommentaire.value == 2) {
     comm = {
@@ -702,6 +899,7 @@ Future<bool> ajouterCommentairePrincipal(
       "commentaire": commentaire,
       "lienImageCommentaire": lienImageCommentaire,
       "dateTime": await dd(),
+      "jaimes": [],
     };
   }
 
@@ -913,4 +1111,172 @@ void suprimerCommentaire(BuildContext context, String idCommentaire) async {
   }
 
   bdd.sup("commentaires", idCommentaire);
+}
+
+//import 'package:flutter_reaction_button/flutter_reaction_button.dart';
+//import 'package:flutter_reaction_button/flutter_reaction_button.dart';
+
+Widget boutonLike() {
+  return ReactionButton<String>(
+    itemSize: Size(40, 40),
+    onReactionChanged: (reaction) {
+      debugPrint('Valeur sélectionnée : ${reaction?.value}');
+    },
+    reactions: <Reaction<String>>[
+      Reaction<String>(
+        value: 'like',
+        icon: GestureDetector(
+          onTap: () {},
+          child: Image.asset("assets/images/likeGifPousse.gif"),
+        ), //Icon(Icons.thumb_up_alt_outlined, color: Colors.grey)
+      ),
+      Reaction<String>(
+        value: 'love',
+        icon: Image.asset("assets/images/likeGifCoeur.gif"),
+      ),
+      Reaction<String>(
+        value: 'funny',
+        icon: Image.asset("assets/images/likeGifSolidaireCoeur.gif"),
+      ),
+      Reaction<String>(
+        value: 'angry',
+        icon: Image.asset("assets/images/likeGifRire.gif"),
+      ),
+      Reaction<String>(
+        value: 'angry',
+        icon: Image.asset("assets/images/likeGIfEtone.gif"),
+      ),
+      Reaction<String>(
+        value: 'angry',
+        icon: Image.asset("assets/images/likeGifTriste.gif"),
+      ),
+      Reaction<String>(
+        value: 'angry',
+        icon: Image.asset("assets/images/likeGifColere.gif"),
+      ),
+    ],
+    selectedReaction: Reaction<String>(
+      value: 'like',
+      icon: Icon(Icons.thumb_up, color: Colors.blue),
+    ),
+    child: TextButton(
+      onPressed: () {},
+      child: Row(
+        children: [Icon(Icons.thumb_up_alt_outlined), Text(" J'aime")],
+      ),
+    ),
+  );
+}
+
+Widget superpositionAvecDecalage() {
+  double taille = 15;
+  return Stack(
+    children: [
+      // Container du bas
+      Container(
+        width: taille,
+        height: taille,
+        //color: Colors.grey,
+        child: Icon(Icons.favorite, size: taille, color: Colors.red),
+      ),
+
+      // Container du dessus avec décalage
+      Positioned(
+        top: 0,
+        left: taille - 5,
+        child: Container(
+          width: taille,
+          height: taille,
+          child: Icon(
+            Icons.abc_outlined,
+            size: taille,
+            color: const Color.fromARGB(255, 244, 219, 54),
+          ),
+        ),
+      ),
+    ],
+  );
+}
+
+Future<bool> ajouterReaction(
+  BuildContext context,
+  String idProduits,
+  String commentaire,
+) async {
+  String? idUser = AuthFirebase().currentUser?.uid;
+  final bool etatCon = await CloudFirestore().checkConnexionFirestore();
+  String avatar =
+      "https://www.shutterstock.com/image-vector/user-profile-icon-vector-avatar-600nw-2558760599.jpg";
+
+  String nomUser = "Indéfini";
+  String lienImageCommentaire = "";
+
+  if (idUser == null || !etatCon) {
+    messageErreurBar(context, messageErr: "Vous n'ètes pas connecté");
+    return false;
+  }
+
+  if (image["image"] != null) {
+    lienImageCommentaire = await envoieImage(image["image"]);
+  }
+
+  //
+
+  final lecture = await CloudFirestore().lectureUBdd("users", idDoc: idUser);
+  if (lecture != null && lecture is DocumentSnapshot) {
+    final data = lecture.data() as Map<String, dynamic>;
+    avatar = data["avatar"] == "" ? avatar : data["avatar"];
+    nomUser = data["nom"];
+  }
+
+  Map<String, dynamic> comm = {};
+  if (rangCommentaire.value == 0) {
+    comm = {
+      "idProduits": idProduits,
+      "idUser": AuthFirebase().currentUser?.uid,
+      "idCommentaireParent": "",
+      "nomUser": nomUser,
+      "avatar": avatar,
+      "principal": true,
+      "rang": 0,
+      "reponseAidCommentaire": "",
+      "commentaire": commentaire,
+      "lienImageCommentaire": lienImageCommentaire,
+      "dateTime": await dd(),
+      "jaimes": [],
+    };
+  } else if (rangCommentaire.value == 1) {
+    comm = {
+      "idProduits": idProduits,
+      "idUser": AuthFirebase().currentUser?.uid,
+      "idCommentaireParent": idCommentairePrincipaleRepondu,
+      "nomUser": nomUser,
+      "nomRepondu": nomRepondu,
+      "avatar": avatar,
+      "principal": false,
+      "rang": 1,
+      "reponseAidCommentaire": "",
+      "commentaire": commentaire,
+      "lienImageCommentaire": lienImageCommentaire,
+      "dateTime": await dd(),
+      "jaimes": [],
+    };
+  } else if (rangCommentaire.value == 2) {
+    comm = {
+      "idProduits": idProduits,
+      "idUser": AuthFirebase().currentUser?.uid,
+      "idCommentaireParent": idCommentairePrincipaleRepondu,
+      "nomUser": nomUser,
+      "nomRepondu": nomRepondu,
+      "avatar": avatar,
+      "principal": false,
+      "rang": 2,
+      "reponseAidCommentaire": "",
+      "commentaire": commentaire,
+      "lienImageCommentaire": lienImageCommentaire,
+      "dateTime": await dd(),
+      "jaimes": [],
+    };
+  }
+  return true;
 }
