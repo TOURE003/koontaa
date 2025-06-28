@@ -68,6 +68,7 @@ dependencies:
   easy_post_v2: ^0.0.1
   easyuser: ^0.0.5
   flutter_reaction_button: ^3.0.0+3
+  url_launcher: ^6.3.1
 
  
    

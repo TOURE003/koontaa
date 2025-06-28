@@ -244,25 +244,54 @@ Widget barreAviCommentaire(
           children: [
             Container(
               padding: EdgeInsets.only(left: larg(context, ratio: 0.02)),
-              child: Row(
-                children: [
-                  Icon(
-                    FontAwesomeIcons.solidThumbsUp,
-                    size: larg(context, ratio: 0.025),
-                    color: Colors.lightBlue,
-                  ),
-                  SizedBox(width: larg(context, ratio: 0.01)),
-                  h9(context, texte: "12"),
-                ],
-              ),
+              child: Row(children: [afficheLike(context, idArticle)]),
             ),
             SizedBox(
               child: Row(
                 children: [
                   Row(
                     children: [
-                      h8(context, texte: "12 "),
-                      h8(context, texte: "Commentaires"),
+                      TextButton(
+                        onPressed: () {
+                          rangCommentaire.value = 0;
+                          controlRepondreAvide.clear();
+                          changePage(
+                            context,
+                            PageAvecChampFixe(
+                              idProduit: idArticle,
+                              urlImgProduit: data["listeImagesPublique"].isEmpty
+                                  ? data["listeImagesTemporairesProduit"]
+                                  : data["listeImagesPublique"],
+                              nomArticle: nomArticle,
+                              prixArticle: prixArticle,
+                            ),
+                          );
+                        },
+                        child: StreamBuilder(
+                          stream: CloudFirestore().lectureBdd(
+                            "commentaires",
+                            filtreCompose: cd("idProduits", idArticle),
+                          ),
+                          builder: (context, snapshot) {
+                            if (snapshot.hasError) {
+                              return Text(
+                                'Erreur lors de la lecture ${snapshot.error}',
+                              );
+                            }
+                            if (!snapshot.hasData ||
+                                snapshot.data!.docs.isEmpty) {
+                              return h8(context, texte: "0 Commentaires");
+                            }
+                            final docs = snapshot.data!.docs;
+                            return h8(
+                              context,
+                              texte: "${docs.length} Commentaires",
+                              couleur: Color(0xFFBE4A00),
+                              //gras: true,
+                            );
+                          },
+                        ),
+                      ),
                     ],
                   ),
                   SizedBox(width: larg(context, ratio: 0.01)),
@@ -278,7 +307,7 @@ Widget barreAviCommentaire(
           ],
         ),
 
-        Row(
+        /* Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Row(
@@ -294,6 +323,8 @@ Widget barreAviCommentaire(
               children: [
                 IconButton(
                   onPressed: () {
+                    rangCommentaire.value = 0;
+                    controlRepondreAvide.clear();
                     changePage(
                       context,
                       PageAvecChampFixe(
@@ -327,7 +358,7 @@ Widget barreAviCommentaire(
               ],
             ),
           ],
-        ),
+        ),*/
       ],
     ),
   );

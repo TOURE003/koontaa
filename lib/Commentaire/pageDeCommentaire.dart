@@ -13,6 +13,7 @@ import 'package:koontaa/pages/compte/connection/page_connection.dart';
 import 'package:koontaa/pages/magasin/ajoutDeProduit.dart';
 import 'package:koontaa/pages/magasin/page_article_magasin.dart';
 import 'package:flutter_reaction_button/flutter_reaction_button.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class PageAvecChampFixe extends StatefulWidget {
   final String idProduit;
@@ -130,7 +131,18 @@ Widget barreinfo(BuildContext context, String idProduit, int nbrCommentaire) {
               child: Row(
                 children: [
                   TextButton(
-                    onPressed: () {},
+                    onPressed: () async {
+                      final Uri uri = Uri(
+                        scheme: 'sms',
+                        path: '+2250749797051',
+                      );
+                      if (!await launchUrl(uri)) {
+                        messageErreurBar(
+                          context,
+                          messageErr: "Nous n'avons pas l'autorisation",
+                        );
+                      }
+                    },
                     child: Row(
                       children: [
                         Icon(Icons.phone, size: 15),
