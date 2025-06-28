@@ -14,6 +14,8 @@ class PageArticleMagasin extends StatefulWidget {
   final String idArticle;
   final String lienImageBoutique;
   final String nomBoutique;
+  final String nomArticle;
+  final String prixArticle;
 
   const PageArticleMagasin({
     super.key,
@@ -21,6 +23,8 @@ class PageArticleMagasin extends StatefulWidget {
     required this.idArticle,
     required this.lienImageBoutique,
     required this.nomBoutique,
+    required this.nomArticle,
+    required this.prixArticle,
   });
 
   final String title;
@@ -87,8 +91,8 @@ class _PageArticleMagasinState extends State<PageArticleMagasin> {
                   barreAviCommentaire(
                     context,
                     data,
-                    lienImageBotique: widget.lienImageBoutique,
-                    nomBoutique: widget.nomBoutique,
+                    nomArticle: widget.nomArticle,
+                    prixArticle: widget.prixArticle,
                     idArticle: widget.idArticle,
                   ),
 
@@ -221,9 +225,9 @@ Widget defilementImagesHorizontales00(
 Widget barreAviCommentaire(
   BuildContext context,
   Map<String, dynamic> data, {
-  String lienImageBotique = "",
+  String nomArticle = "",
   String idArticle = "",
-  String nomBoutique = "",
+  String prixArticle = "",
 }) {
   return Container(
     width: double.infinity,
@@ -297,6 +301,8 @@ Widget barreAviCommentaire(
                         urlImgProduit: data["listeImagesPublique"].isEmpty
                             ? data["listeImagesTemporairesProduit"]
                             : data["listeImagesPublique"],
+                        nomArticle: nomArticle,
+                        prixArticle: prixArticle,
                       ),
                     );
                   },

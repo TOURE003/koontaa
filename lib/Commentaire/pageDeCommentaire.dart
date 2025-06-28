@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -16,11 +17,15 @@ import 'package:flutter_reaction_button/flutter_reaction_button.dart';
 class PageAvecChampFixe extends StatefulWidget {
   final String idProduit;
   final List<dynamic> urlImgProduit;
+  final String nomArticle;
+  final String prixArticle;
 
   const PageAvecChampFixe({
     super.key,
     required this.idProduit,
     required this.urlImgProduit,
+    required this.nomArticle,
+    required this.prixArticle,
   });
 
   @override
@@ -37,8 +42,18 @@ class _PageAvecChampFixeState extends State<PageAvecChampFixe> {
       resizeToAvoidBottomInset: true,
       backgroundColor: couleurDeApp(),
       appBar: AppBar(
-        title: const Text('Commentaires'),
-        backgroundColor: Colors.deepOrange,
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            h5(context, texte: widget.nomArticle, couleur: Colors.white),
+            h5(
+              context,
+              texte: "${arg(widget.prixArticle)} F",
+              couleur: Colors.white,
+            ),
+          ],
+        ),
+        backgroundColor: Color(0xffBE4A00),
       ),
       body: Stack(
         children: [
@@ -47,8 +62,9 @@ class _PageAvecChampFixeState extends State<PageAvecChampFixe> {
             padding: const EdgeInsets.all(8),
             children: [
               defilementImagesHorizontales(context, widget.urlImgProduit),
+
               SizedBox(height: 20),
-              superpositionAvecDecalage(),
+
               fenetreCommentaire(
                 context,
                 () {
@@ -70,7 +86,7 @@ class _PageAvecChampFixeState extends State<PageAvecChampFixe> {
   }
 }
 
-Widget barreinfo(BuildContext context) {
+Widget barreinfo(BuildContext context, String idProduit, int nbrCommentaire) {
   return Container(
     padding: EdgeInsets.all(10),
     decoration: BoxDecoration(
@@ -87,7 +103,7 @@ Widget barreinfo(BuildContext context) {
                 children: [
                   TextButton(
                     onPressed: () {},
-                    child: Row(children: [boutonLike()]),
+                    child: Row(children: [boutonLike(context, idProduit)]),
                   ),
                 ],
               ),
@@ -96,7 +112,9 @@ Widget barreinfo(BuildContext context) {
               child: Row(
                 children: [
                   TextButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      focusNodeCommentaire.requestFocus();
+                    },
                     child: Row(
                       children: [
                         Icon(Icons.comment, size: 15),
@@ -124,7 +142,7 @@ Widget barreinfo(BuildContext context) {
                 ],
               ),
             ),
-            Container(
+            /*Container(
               child: Row(
                 children: [
                   TextButton(
@@ -139,7 +157,7 @@ Widget barreinfo(BuildContext context) {
                   ),
                 ],
               ),
-            ),
+            ),*/
           ],
         ),
         Row(
@@ -147,12 +165,7 @@ Widget barreinfo(BuildContext context) {
           children: [
             Container(
               //margin: EdgeInsets.only(left: 30),
-              child: Row(
-                children: [
-                  Icon(Icons.favorite, size: 15),
-                  h8(context, texte: "15"),
-                ],
-              ),
+              child: Row(children: [afficheLike(context, idProduit)]),
             ),
             Container(
               margin: EdgeInsets.only(left: 30),
@@ -162,8 +175,11 @@ Widget barreinfo(BuildContext context) {
               margin: EdgeInsets.only(left: 30),
               child: Row(
                 children: [
-                  h8(context, texte: "15 "),
-                  h8(context, texte: "Commentaires"),
+                  h8(context, texte: "$nbrCommentaire "),
+                  h8(
+                    context,
+                    texte: nbrCommentaire > 1 ? "Commentaires" : "Commentaire",
+                  ),
                 ],
               ),
             ),
@@ -226,7 +242,7 @@ Widget fenetreCommentaire(
 
       return Column(
         children: [
-          barreinfo(context),
+          barreinfo(context, idProduit, docs.length),
           Column(
             //shrinkWrap: true,
             // physics: const NeverScrollableScrollPhysics(),
@@ -1116,61 +1132,167 @@ void suprimerCommentaire(BuildContext context, String idCommentaire) async {
 //import 'package:flutter_reaction_button/flutter_reaction_button.dart';
 //import 'package:flutter_reaction_button/flutter_reaction_button.dart';
 
-Widget boutonLike() {
+Widget boutonLike(BuildContext context, String idProduits) {
   return ReactionButton<String>(
     itemSize: Size(40, 40),
     onReactionChanged: (reaction) {
-      debugPrint('Valeur sélectionnée : ${reaction?.value}');
+      //debugPrint('Valeur sélectionnée : ${reaction?.value}');
     },
     reactions: <Reaction<String>>[
       Reaction<String>(
-        value: 'like',
+        value: '1',
         icon: GestureDetector(
-          onTap: () {},
+          onTap: () {
+            ajouterReaction(context, idProduits, 1);
+          },
           child: Image.asset("assets/images/likeGifPousse.gif"),
         ), //Icon(Icons.thumb_up_alt_outlined, color: Colors.grey)
       ),
       Reaction<String>(
-        value: 'love',
-        icon: Image.asset("assets/images/likeGifCoeur.gif"),
+        value: '2',
+        icon: GestureDetector(
+          onTap: () {
+            ajouterReaction(context, idProduits, 2);
+          },
+          child: Image.asset("assets/images/likeGifCoeur.gif"),
+        ),
       ),
       Reaction<String>(
-        value: 'funny',
-        icon: Image.asset("assets/images/likeGifSolidaireCoeur.gif"),
+        value: '3',
+        icon: GestureDetector(
+          onTap: () {
+            ajouterReaction(context, idProduits, 3);
+          },
+          child: Image.asset("assets/images/likeGifSolidaireCoeur.gif"),
+        ),
       ),
       Reaction<String>(
-        value: 'angry',
-        icon: Image.asset("assets/images/likeGifRire.gif"),
+        value: '4',
+        icon: GestureDetector(
+          onTap: () {
+            ajouterReaction(context, idProduits, 4);
+          },
+          child: Image.asset("assets/images/likeGifRire.gif"),
+        ),
       ),
       Reaction<String>(
-        value: 'angry',
-        icon: Image.asset("assets/images/likeGIfEtone.gif"),
+        value: '5',
+        icon: GestureDetector(
+          onTap: () {
+            ajouterReaction(context, idProduits, 5);
+          },
+          child: Image.asset("assets/images/likeGIfEtone.gif"),
+        ),
       ),
       Reaction<String>(
-        value: 'angry',
-        icon: Image.asset("assets/images/likeGifTriste.gif"),
+        value: '6',
+        icon: GestureDetector(
+          onTap: () {
+            ajouterReaction(context, idProduits, 6);
+          },
+          child: Image.asset("assets/images/likeGifTriste.gif"),
+        ),
       ),
       Reaction<String>(
-        value: 'angry',
-        icon: Image.asset("assets/images/likeGifColere.gif"),
+        value: '7',
+        icon: GestureDetector(
+          onTap: () {
+            ajouterReaction(context, idProduits, 7);
+          },
+          child: Image.asset("assets/images/likeGifColere.gif"),
+        ),
       ),
     ],
     selectedReaction: Reaction<String>(
-      value: 'like',
+      value: '0',
       icon: Icon(Icons.thumb_up, color: Colors.blue),
     ),
     child: TextButton(
-      onPressed: () {},
-      child: Row(
-        children: [Icon(Icons.thumb_up_alt_outlined), Text(" J'aime")],
+      onPressed: () {
+        ajouterReaction(context, idProduits, 0);
+      },
+      child: StreamBuilder(
+        stream: CloudFirestore().lectureBdd(
+          "likes",
+          filtreCompose: Filter.and(
+            cd("idProduits", idProduits),
+            cd("idUser", AuthFirebase().currentUser!.uid),
+          ),
+        ),
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return SizedBox();
+          }
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return Row(
+              children: [Icon(Icons.thumb_up_alt_outlined), Text(" J'aime")],
+            );
+          }
+          final docs = snapshot.data!.docs;
+          final data = docs[0].data() as Map<String, dynamic>;
+          return Row(
+            children: [
+              iconAff[data["type"] - 1],
+              Text(
+                " ${texteAff[data["type"] - 1]}",
+                style: TextStyle(
+                  color: data["type"] == 2 ? Colors.red : Colors.black,
+                ),
+              ),
+            ],
+          );
+        },
       ),
     ),
   );
 }
 
-Widget superpositionAvecDecalage() {
-  double taille = 15;
-  return Stack(
+Widget afficheLike(BuildContext context, String idArticle) {
+  //double taille = 15;
+  List<int> tabTypLik = [];
+
+  return StreamBuilder(
+    stream: CloudFirestore().lectureBdd(
+      "likes",
+      filtreCompose: cd("idProduits", idArticle),
+    ),
+    builder: (context, snapshot) {
+      if (snapshot.hasError) {
+        return SizedBox();
+      }
+      if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+        return const SizedBox();
+      }
+      final docs = snapshot.data!.docs;
+      tabTypLik = [];
+
+      for (var i = 0; i < docs.length; i++) {
+        final data = docs[i].data() as Map<String, dynamic>;
+        tabTypLik.add(data["type"]);
+      }
+
+      //return Text(data["nom"] ?? "");
+
+      List<bool> aff = [
+        tabTypLik.contains(1),
+        tabTypLik.contains(2),
+        tabTypLik.contains(3),
+        tabTypLik.contains(4),
+        tabTypLik.contains(5),
+        tabTypLik.contains(6),
+        tabTypLik.contains(7),
+      ];
+
+      return Row(
+        children: [
+          iconLike(aff, iconAff, taille: 35),
+          h8(context, texte: "${docs.length}"),
+        ],
+      );
+    },
+  );
+
+  /*return Stack(
     children: [
       // Container du bas
       Container(
@@ -1195,30 +1317,84 @@ Widget superpositionAvecDecalage() {
         ),
       ),
     ],
+  );*/
+}
+
+Widget iconLike(List<bool> aff, List<Widget> iconAff, {double taille = 15}) {
+  List<Widget> tabStack = [];
+  double decalage = 0;
+  int compteur = 0;
+  for (int i = 0; i < aff.length; i++) {
+    if (compteur == 4) {
+      break;
+    }
+    if (aff[i]) {
+      tabStack.add(
+        Positioned(
+          left: decalage,
+          child: Container(width: taille, height: taille, child: iconAff[i]),
+        ),
+      );
+      decalage += taille * 0.6;
+      compteur++; // superposition partielle (40% d’overlap)
+    }
+  }
+
+  return SizedBox(
+    height: taille,
+    width: decalage + taille * 0.4,
+    child: Stack(clipBehavior: Clip.none, children: tabStack),
   );
 }
 
 Future<bool> ajouterReaction(
   BuildContext context,
   String idProduits,
-  String commentaire,
+  int type,
 ) async {
   String? idUser = AuthFirebase().currentUser?.uid;
-  final bool etatCon = await CloudFirestore().checkConnexionFirestore();
+  //final bool etatCon = await CloudFirestore().checkConnexionFirestore();
   String avatar =
       "https://www.shutterstock.com/image-vector/user-profile-icon-vector-avatar-600nw-2558760599.jpg";
 
   String nomUser = "Indéfini";
-  String lienImageCommentaire = "";
+  //String lienImageCommentaire = "";
 
-  if (idUser == null || !etatCon) {
+  if (idUser == null) {
     messageErreurBar(context, messageErr: "Vous n'ètes pas connecté");
     return false;
   }
 
-  if (image["image"] != null) {
-    lienImageCommentaire = await envoieImage(image["image"]);
+  final lectureLike = await CloudFirestore().lectureUBdd(
+    "likes",
+    filtreCompose: Filter.and(
+      cd("idProduits", idProduits),
+      cd("idUser", idUser),
+    ),
+  );
+
+  if (lectureLike != null && lectureLike.docs.isNotEmpty) {
+    final docs = lectureLike.docs;
+    final data = docs[0].data() as Map<String, dynamic>;
+
+    if (type == 0) {
+      return await CloudFirestore().sup("likes", docs[0].id);
+    } else {
+      return await CloudFirestore().modif("likes", docs[0].id, {"type": type});
+    }
+
+    /*for (var i = 0; i < docs.length; i++) {
+      final data = docs[i].data() as Map<String, dynamic>;
+
+      supprimerImage(data["lienImageCommentaire"]);
+
+      lectureLike.sup("commentaires", docs[i].id);
+    }*/
   }
+
+  /*if (image["image"] != null) {
+    lienImageCommentaire = await envoieImage(image["image"]);
+  }*/
 
   //
 
@@ -1230,53 +1406,46 @@ Future<bool> ajouterReaction(
   }
 
   Map<String, dynamic> comm = {};
-  if (rangCommentaire.value == 0) {
-    comm = {
-      "idProduits": idProduits,
-      "idUser": AuthFirebase().currentUser?.uid,
-      "idCommentaireParent": "",
-      "nomUser": nomUser,
-      "avatar": avatar,
-      "principal": true,
-      "rang": 0,
-      "reponseAidCommentaire": "",
-      "commentaire": commentaire,
-      "lienImageCommentaire": lienImageCommentaire,
-      "dateTime": await dd(),
-      "jaimes": [],
-    };
-  } else if (rangCommentaire.value == 1) {
-    comm = {
-      "idProduits": idProduits,
-      "idUser": AuthFirebase().currentUser?.uid,
-      "idCommentaireParent": idCommentairePrincipaleRepondu,
-      "nomUser": nomUser,
-      "nomRepondu": nomRepondu,
-      "avatar": avatar,
-      "principal": false,
-      "rang": 1,
-      "reponseAidCommentaire": "",
-      "commentaire": commentaire,
-      "lienImageCommentaire": lienImageCommentaire,
-      "dateTime": await dd(),
-      "jaimes": [],
-    };
-  } else if (rangCommentaire.value == 2) {
-    comm = {
-      "idProduits": idProduits,
-      "idUser": AuthFirebase().currentUser?.uid,
-      "idCommentaireParent": idCommentairePrincipaleRepondu,
-      "nomUser": nomUser,
-      "nomRepondu": nomRepondu,
-      "avatar": avatar,
-      "principal": false,
-      "rang": 2,
-      "reponseAidCommentaire": "",
-      "commentaire": commentaire,
-      "lienImageCommentaire": lienImageCommentaire,
-      "dateTime": await dd(),
-      "jaimes": [],
-    };
-  }
-  return true;
+
+  comm = {
+    "idProduits": idProduits,
+    "idUser": AuthFirebase().currentUser?.uid,
+    //"idCommentaireParent": "",
+    "nomUser": nomUser,
+    "avatar": avatar,
+    "type": type == 0 ? 1 : type,
+    //"principal": true,
+    //"rang": 0,
+    //"reponseAidCommentaire": "",
+    //"commentaire": commentaire,
+    //"lienImageCommentaire": lienImageCommentaire,
+    "dateTime": await dd(),
+    //"jaimes": [],
+  };
+
+  return await CloudFirestore().ajoutBdd("likes", comm);
 }
+
+final List<Widget> iconAff = [
+  Icon(Icons.thumb_up, color: Colors.blue, size: 20), // 👍 Like
+  Icon(Icons.favorite, color: Colors.red, size: 20), // ❤️ Love
+  Text("🤗", style: TextStyle(fontSize: 20)),
+  Icon(Icons.emoji_emotions, color: Colors.orange, size: 20), // 😂 Haha
+  Icon(
+    Icons.emoji_objects,
+    color: Colors.amber,
+    size: 20,
+  ), // 😮 Wow (icône symbolique)
+  Icon(Icons.sentiment_dissatisfied, color: Colors.blue, size: 20), // 😢 Sad
+  Icon(Icons.mood_bad, color: Colors.redAccent, size: 20), // 😡 Angry
+];
+
+final List<String> texteAff = [
+  "J’aime", // 👍 Like
+  "J’adore", // ❤️ Love
+  "Magnifique", // 🤗 Care
+  "Haha", // 😂 Haha
+  "Wouah", // 😮 Wow
+  "Triste", // 😢 Sad
+  "Grrr", // 😡 Angry
+];

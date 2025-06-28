@@ -58,6 +58,8 @@ class _ContProduitBoutiquePublieState extends State<ContProduitBoutiquePublie> {
               nomBoutique: "Koontaa",
               lienImageBoutique:
                   "https://thumbs.dreamstime.com/b/boutique-34493816.jpg",
+              nomArticle: infoDef()[1],
+              prixArticle: widget.data["prixTemporaireProduit"],
             ),
           );
         },
