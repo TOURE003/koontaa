@@ -9,22 +9,23 @@ import 'package:koontaa/pages/compte/connection/page_connection.dart';
 import 'package:koontaa/pages/magasin/ajoutDeProduit.dart';
 import 'package:koontaa/pages/magasin/page_article_magasin.dart';
 
-class ContProduitBoutiquePublie extends StatefulWidget {
+class ContProduitBoutiquePublieBloque extends StatefulWidget {
   final Map<String, dynamic> data;
   final String id;
 
-  const ContProduitBoutiquePublie({
+  const ContProduitBoutiquePublieBloque({
     super.key,
     required this.data,
     required this.id,
   });
 
   @override
-  State<ContProduitBoutiquePublie> createState() =>
-      _ContProduitBoutiquePublieState();
+  State<ContProduitBoutiquePublieBloque> createState() =>
+      _ContProduitBoutiquePublieBloqueState();
 }
 
-class _ContProduitBoutiquePublieState extends State<ContProduitBoutiquePublie> {
+class _ContProduitBoutiquePublieBloqueState
+    extends State<ContProduitBoutiquePublieBloque> {
   bool enChargement = false;
 
   List infoDef() {
@@ -105,17 +106,9 @@ class _ContProduitBoutiquePublieState extends State<ContProduitBoutiquePublie> {
                       SizedBox(height: long(context, ratio: 0.005)),
                       Row(
                         children: [
-                          Icon(
-                            Icons.fiber_manual_record,
-                            size: 12,
-                            color: Colors.green,
-                          ),
+                          Icon(Icons.dangerous, color: Colors.red),
                           SizedBox(width: 5),
-                          h7(
-                            context,
-                            texte: "Publié",
-                            couleur: Colors.green.shade900,
-                          ),
+                          h7(context, texte: "Bloqué", couleur: Colors.red),
                         ],
                       ),
                       SizedBox(height: long(context, ratio: 0.005)),
@@ -288,9 +281,9 @@ class _ContProduitBoutiquePublieState extends State<ContProduitBoutiquePublie> {
                                 },
                               ),
                               MenuAction(
-                                texte: "Bloquer",
-                                icon: Icons.dangerous,
-                                couleur: Colors.red,
+                                texte: "Débloquer",
+                                icon: Icons.verified,
+                                couleur: Colors.green,
                                 onTap: () async {
                                   if (!await CloudFirestore()
                                       .checkConnexionFirestore()) {
@@ -304,7 +297,7 @@ class _ContProduitBoutiquePublieState extends State<ContProduitBoutiquePublie> {
                                   CloudFirestore().modif(
                                     "produits",
                                     widget.id,
-                                    {"status": 4, "dateTimeModif": await dd()},
+                                    {"status": 3},
                                   );
                                 },
                               ),

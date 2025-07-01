@@ -12,6 +12,7 @@ import 'package:koontaa/pages/compte/connection/page_connection.dart';
 import 'package:flutter/services.dart';
 
 bool? modificationProduit;
+bool? modificationProduitPublique;
 String? idProduitsModifie;
 
 class AjoutProduits extends StatefulWidget {
@@ -47,6 +48,12 @@ class _AjoutProduitsState extends State<AjoutProduits> {
                 setState(() {});
               }),
 
+              (modificationProduitPublique! ||
+                      (controleMessageBoutiqueModif.text != "" &&
+                          modificationProduit!))
+                  ? champDeMessage(context)
+                  : SizedBox(),
+
               afficheMessage
                   ? messageModifProduit(context, messageServerModifProduit, () {
                       setState(() {});
@@ -70,18 +77,27 @@ class _AjoutProduitsState extends State<AjoutProduits> {
                 setState(() {});
               }),
               SizedBox(height: long(context, ratio: 0.025)),
-              !modificationProduit!
+              modificationProduit!
+                  ? boutonModifierArticle(context, () {
+                      try {
+                        setState(() {});
+                      } catch (e) {}
+                    })
+                  : SizedBox(),
+
+              modificationProduitPublique!
+                  ? boutonModifierArticlePublique(context, () {
+                      setState(() {});
+                    })
+                  : SizedBox(),
+
+              (!modificationProduit! && !modificationProduitPublique!)
                   ? boutonAjouterArticle(context, () {
                       try {
                         setState(() {});
                       } catch (e) {}
-                      ;
                     })
-                  : boutonModifierArticle(context, () {
-                      try {
-                        setState(() {});
-                      } catch (e) {}
-                    }),
+                  : SizedBox(),
             ],
           ),
         ),
@@ -472,10 +488,14 @@ Widget imageTemporaire(
     caseSensitive: false,
   );
 
-  if (regex.hasMatch(image["lien"])) {
-    img = imageNetwork(context, image["lien"], borderRadius: 6);
-  } else {
-    img = Image.file(File(image["image"].path), fit: BoxFit.cover);
+  try {
+    if (regex.hasMatch(image["lien"])) {
+      img = imageNetwork(context, image["lien"], borderRadius: 6);
+    } else {
+      img = Image.file(File(image["image"].path), fit: BoxFit.cover);
+    }
+  } catch (e) {
+    return imageNetwork(context, "", borderRadius: 6);
   }
 
   return Container(
@@ -1142,6 +1162,7 @@ void ajoutProduit(BuildContext context, Function setStating) async {
     "listeCommentaire": [],
     "listeLikeIdUser": [],
     "vendu": 0,
+    "messageBoutiquePourModif": "",
   };
 
   if (await CloudFirestore().checkConnexionFirestore()) {
@@ -1167,7 +1188,18 @@ void ajoutProduit(BuildContext context, Function setStating) async {
 void modifProduit(BuildContext context, Function setStating) async {
   loadingEnvoieProduit = true;
   setStating();
+  tabLien = [];
+  final regex = RegExp(
+    r'^https?:\/\/.*\.(?:png|jpg|jpeg|gif|bmp|webp)$',
+    caseSensitive: false,
+  );
+
   try {
+    for (var i = 0; i < tabPhoto.length; i++) {
+      if (regex.hasMatch(tabPhoto[i]["lien"])) {
+        tabLien.add(tabPhoto[i]["lien"]);
+      }
+    }
     for (var i = 0; i < tabPhoto.length; i++) {
       if (tabPhoto[i]["message"] != "modif") {
         if (!imageEnvoyer.contains(tabPhoto[i])) {
@@ -1192,6 +1224,8 @@ void modifProduit(BuildContext context, Function setStating) async {
     "listeImagesTemporairesProduit": tabLien,
     "messageRefus": "",
     "dateTimeModif": await dd(),
+    "status": 0,
+    "messageBoutiquePourModif": controleMessageBoutiqueModif.text,
   };
 
   if (await CloudFirestore().checkConnexionFirestore()) {
@@ -1272,4 +1306,161 @@ void renitialisePageAjoutArticle() {
     false,
     false,
   ];
+}
+
+TextEditingController controleMessageBoutiqueModif = TextEditingController();
+Widget champDeMessage(
+  BuildContext context, {
+
+  FocusNode? focusNode,
+  String hint = "Laissez un message...",
+}) {
+  return Container(
+    height: long(context, ratio: 0.20),
+    margin: EdgeInsets.only(top: 20),
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(5),
+      border: Border.all(),
+    ),
+    child: TextField(
+      maxLines: null, // permet d'étendre à plusieurs lignes
+      expands: true, // important pour remplir la hauteur du parent
+      controller: controleMessageBoutiqueModif,
+      focusNode: focusNode,
+      // Pour permettre l’écriture sur plusieurs lignes
+      decoration: InputDecoration(hintText: hint, border: InputBorder.none),
+      keyboardType: TextInputType.multiline,
+    ),
+  );
+}
+
+Widget boutonModifierArticlePublique(
+  BuildContext context,
+  Function setStating,
+) {
+  return Container(
+    //margin: EdgeInsets.symmetric(horizontal: larg(context, ratio: 0.02)),
+    width: double.infinity, // Prend toute la largeur disponible
+    child: TextButton.icon(
+      onPressed: loadingEnvoieProduit
+          ? null
+          : () async {
+              if (_formKeyAjoutProduit.currentState!.validate()) {
+                if (tabPhoto.isEmpty) {
+                  messageErreurBar(
+                    context,
+                    messageErr: "Ajoutez une image",
+                    couleur: Colors.green,
+                  );
+                  return;
+                }
+
+                if (await CloudFirestore().checkConnexionFirestore()) {
+                  modifProduitPublique(context, setStating);
+                } else {
+                  loadingEnvoieProduit = false;
+                  setStating();
+                  messageErreurBar(
+                    context,
+                    messageErr: "Vérifiez votre connection !",
+                  );
+                }
+              }
+            },
+      icon: Icon(Icons.edit, color: Colors.white),
+      label: loadingEnvoieProduit
+          ? circular(message: "")
+          : Text(
+              "Modifier",
+              style: TextStyle(
+                fontSize: larg(context, ratio: 0.03),
+                color: Colors.white,
+              ),
+            ),
+      style: TextButton.styleFrom(
+        backgroundColor: loadingEnvoieProduit
+            ? Colors.white
+            : Color(0xFFBE4A00), // Couleur de fond
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10), // Bords arrondis
+          // Bordure
+        ),
+        padding: EdgeInsets.symmetric(vertical: 16), // Hauteur du bouton
+      ),
+    ),
+  );
+}
+
+void modifProduitPublique(BuildContext context, Function setStating) async {
+  loadingEnvoieProduit = true;
+  setStating();
+
+  tabLien = [];
+  final regex = RegExp(
+    r'^https?:\/\/.*\.(?:png|jpg|jpeg|gif|bmp|webp)$',
+    caseSensitive: false,
+  );
+
+  try {
+    for (var i = 0; i < tabPhoto.length; i++) {
+      if (regex.hasMatch(tabPhoto[i]["lien"])) {
+        tabLien.add(tabPhoto[i]["lien"]);
+      }
+    }
+
+    for (var i = 0; i < tabPhoto.length; i++) {
+      if (tabPhoto[i]["message"] != "modif") {
+        if (!imageEnvoyer.contains(tabPhoto[i])) {
+          final lien = await envoieImage(tabPhoto[i]["image"]);
+          tabLien.add(lien);
+          imageEnvoyer.add(tabPhoto[i]);
+        }
+      }
+    }
+  } catch (e) {
+    loadingEnvoieProduit = false;
+    setStating();
+    messageErreurBar(context, messageErr: e.toString());
+    return;
+  }
+
+  final Map<String, dynamic> mapProduit = {
+    "nomTemporaireProduit": nomProduitAjoutController.text,
+    "prixTemporaireProduit": prixProduitAjoutController.text,
+    "taillesVentementDisponibles": listeCocherTailleVetement,
+    "pointuresChaussureDisponible": listeCocherPointureChessure,
+    "listeImagesTemporairesProduit": tabLien,
+    "messageRefus": "",
+    "dateTimeModif": await dd(),
+    "status": 0,
+    "messageBoutiquePourModif": controleMessageBoutiqueModif.text,
+  };
+
+  if (await CloudFirestore().checkConnexionFirestore()) {
+    await CloudFirestore().modif("produits", idProduitsModifie!, mapProduit);
+    //renitialisePage();
+    loadingEnvoieProduit = false;
+    setStating();
+
+    try {
+      for (var i = 0; i < tabImgeSup.length; i++) {
+        if (tabImgeSup[i]["message"] == "modif") {
+          supprimerImage(tabImgeSup[i]["lien"]);
+        }
+      }
+
+      Navigator.pop(context);
+      return;
+    } catch (e) {
+      Navigator.pop(context);
+      return;
+    }
+  } else {
+    loadingEnvoieProduit = false;
+    setStating();
+    messageErreurBar(context, messageErr: "Vérifiez votre connection !");
+    return;
+  }
 }

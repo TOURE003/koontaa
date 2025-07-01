@@ -132,16 +132,18 @@ Widget barreinfo(BuildContext context, String idProduit, int nbrCommentaire) {
                 children: [
                   TextButton(
                     onPressed: () async {
-                      final Uri uri = Uri(
-                        scheme: 'sms',
-                        path: '+2250749797051',
-                      );
-                      if (!await launchUrl(uri)) {
-                        messageErreurBar(
-                          context,
-                          messageErr: "Nous n'avons pas l'autorisation",
+                      try {
+                        final Uri uri = Uri(
+                          scheme: 'sms',
+                          path: '+2250749797051',
                         );
-                      }
+                        if (!await launchUrl(uri)) {
+                          messageErreurBar(
+                            context,
+                            messageErr: "Nous n'avons pas l'autorisation",
+                          );
+                        }
+                      } catch (e) {}
                     },
                     child: Row(
                       children: [
@@ -220,7 +222,13 @@ Widget fenetreCommentaire(
       }
 
       if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-        return commentaireParDefaut(context);
+        return Column(
+          children: [
+            barreinfo(context, idProduit, 0),
+            commentaireParDefaut(context),
+          ],
+        );
+        // return commentaireParDefaut(context);
       }
 
       final docs = CloudFirestore().trierDocs(snapshot.data!.docs, [
@@ -616,7 +624,7 @@ Widget buildCommentWithReplies(
 
 Widget commentaireParDefaut(BuildContext context) {
   return Container(
-    margin: EdgeInsets.only(top: long(context, ratio: 0.06)),
+    //margin: EdgeInsets.only(top: long(context, ratio: 0.06)),
     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
     decoration: BoxDecoration(
       color: Colors.white,
@@ -752,25 +760,44 @@ Widget clavierDuBas(
                     controller: textCommentaire,
                     decoration: InputDecoration(
                       suffixIcon: SizedBox(
-                        //color: Colors.red,
-                        width: larg(context, ratio: 0.16),
+                        width: larg(context, ratio: 0.12),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.end,
-                          crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            IconButton(
-                              onPressed: () async {
-                                image = await imageUser();
-                                setStating();
+                            PopupMenuButton<String>(
+                              icon: Icon(Icons.image), // ou Icons.attach_file
+                              tooltip: "Ajouter une image",
+                              onSelected: (value) async {
+                                if (value == 'galerie') {
+                                  image = await imageUser();
+                                  setStating();
+                                } else if (value == 'camera') {
+                                  image = await imageUser(camera: true);
+                                  setStating();
+                                }
                               },
-                              icon: Icon(Icons.photo),
-                            ),
-                            IconButton(
-                              onPressed: () async {
-                                image = await imageUser(camera: true);
-                                setStating();
-                              },
-                              icon: Icon(Icons.add_a_photo),
+                              itemBuilder: (context) => [
+                                PopupMenuItem(
+                                  value: 'galerie',
+                                  child: Row(
+                                    children: const [
+                                      Icon(Icons.photo_library, size: 20),
+                                      SizedBox(width: 8),
+                                      Text("Galerie"),
+                                    ],
+                                  ),
+                                ),
+                                PopupMenuItem(
+                                  value: 'camera',
+                                  child: Row(
+                                    children: const [
+                                      Icon(Icons.photo_camera, size: 20),
+                                      SizedBox(width: 8),
+                                      Text("Caméra"),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
@@ -1228,7 +1255,12 @@ Widget boutonLike(BuildContext context, String idProduits) {
           "likes",
           filtreCompose: Filter.and(
             cd("idProduits", idProduits),
-            cd("idUser", AuthFirebase().currentUser!.uid),
+            cd(
+              "idUser",
+              AuthFirebase().currentUser == null
+                  ? ""
+                  : AuthFirebase().currentUser!.uid,
+            ),
           ),
         ),
         builder: (context, snapshot) {
@@ -1240,6 +1272,7 @@ Widget boutonLike(BuildContext context, String idProduits) {
               children: [Icon(Icons.thumb_up_alt_outlined), Text(" J'aime")],
             );
           }
+
           final docs = snapshot.data!.docs;
           final data = docs[0].data() as Map<String, dynamic>;
           return Row(

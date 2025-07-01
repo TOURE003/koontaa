@@ -81,6 +81,9 @@ class _ContProduitBoutiqueTraitementState
           //messageErreurBar(context, messageErr: "kjkjkj");
           modificationProduit = true;
           afficheMessage = false;
+          modificationProduitPublique = false;
+          controleMessageBoutiqueModif.text =
+              widget.data["messageBoutiquePourModif"] ?? "";
           //tabPhoto = [];
           tabImgeSup = [];
 
@@ -169,13 +172,84 @@ class _ContProduitBoutiqueTraitementState
                     ),
                     enChargement
                         ? circular(message: "")
-                        : IconButton(
+                        : MenuContextuelAnime(
+                            actions: [
+                              MenuAction(
+                                texte: "Modifier",
+                                icon: Icons.edit,
+                                couleur: Colors.blueAccent,
+                                onTap: () async {
+                                  setState(() => enChargement = true);
+                                  tabPhoto = [];
+                                  for (
+                                    var i = 0;
+                                    i <
+                                        widget
+                                            .data["listeImagesTemporairesProduit"]
+                                            .length;
+                                    i++
+                                  ) {
+                                    tabPhoto.add({
+                                      "lien": widget
+                                          .data["listeImagesTemporairesProduit"][i],
+                                      "image": null,
+                                      "message": "modif",
+                                    });
+                                  }
+
+                                  nomProduitAjoutController.text =
+                                      widget.data["nomTemporaireProduit"];
+                                  prixProduitAjoutController.text =
+                                      widget.data["prixTemporaireProduit"];
+                                  listeCocherTailleVetement = widget
+                                      .data["taillesVentementDisponibles"];
+                                  listeCocherPointureChessure = widget
+                                      .data["pointuresChaussureDisponible"];
+                                  //messageErreurBar(context, messageErr: "kjkjkj");
+                                  modificationProduit = true;
+                                  afficheMessage = false;
+                                  modificationProduitPublique = false;
+                                  controleMessageBoutiqueModif.text =
+                                      widget.data["messageBoutiquePourModif"] ??
+                                      "";
+                                  //tabPhoto = [];
+                                  tabImgeSup = [];
+
+                                  idProduitsModifie = widget.id;
+
+                                  if (!await CloudFirestore()
+                                      .checkConnexionFirestore()) {
+                                    setState(() => enChargement = false);
+                                    messageErreurBar(
+                                      context,
+                                      messageErr: "Vérifiez votreconnection !",
+                                    );
+                                    return;
+                                  }
+
+                                  setState(() => enChargement = false);
+
+                                  changePage(
+                                    context,
+                                    AjoutProduits(title: "Modification"),
+                                  );
+                                },
+                              ),
+                              MenuAction(
+                                texte: "Supprimer",
+                                icon: Icons.delete,
+                                couleur: Colors.red,
+                                onTap: supprimerProduit,
+                              ),
+                            ],
+                          ),
+                    /*IconButton(
                             onPressed: supprimerProduit,
                             icon: Icon(
                               Icons.close,
                               color: Color.fromARGB(84, 190, 0, 0),
                             ),
-                          ),
+                          ),*/
                   ],
                 ),
               ),

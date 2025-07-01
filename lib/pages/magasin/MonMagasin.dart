@@ -13,6 +13,7 @@ import 'package:koontaa/pages/compte/connection/page_connection.dart';
 import 'package:koontaa/pages/home/home_widgets.dart';
 import 'package:koontaa/pages/magasin/ajoutDeProduit.dart';
 import 'package:koontaa/pages/magasin/produitAttenteModificationBoutique_widget.dart';
+import 'package:koontaa/pages/magasin/produitPublieBloque_widget.dart';
 import 'package:koontaa/pages/magasin/produitPublie_widget.dart';
 import 'package:koontaa/pages/magasin/produitRefuse_widget%20.dart';
 import 'package:koontaa/pages/magasin/produitTraitement_Widget.dart';
@@ -95,6 +96,16 @@ Widget pageMagasin(BuildContext context, Function setStating) {
                   ),
                 ),
               );
+            },
+          ),
+        ),
+        SliverToBoxAdapter(
+          child: enteteFiltre(
+            context,
+            //filtreActif: "Tous",
+            onFiltreChange: (filtre) {
+              filtreActif = filtre;
+              setStating();
             },
           ),
         ),
@@ -302,6 +313,7 @@ Widget bouttonAjouterProduits(BuildContext context) {
       onPressed: () {
         cameraAuto = true;
         afficheMessage = false;
+        modificationProduitPublique = false;
         if (modificationProduit == null) {
           modificationProduit = false;
         } else if (modificationProduit!) {
@@ -342,9 +354,9 @@ Widget listeProduitBoutique0(BuildContext context, Function setStating) {
       //orderBy: ["dateTime", true],
     ),
     builder: (context, snapshot) {
-      if (snapshot.connectionState == ConnectionState.waiting) {
+      /*if (snapshot.connectionState == ConnectionState.waiting) {
         return SliverToBoxAdapter(child: circular());
-      }
+      }*/
       if (snapshot.hasError) {
         print('Erreur lors de la lecture ${snapshot.error}');
         return SliverToBoxAdapter(
@@ -355,7 +367,16 @@ Widget listeProduitBoutique0(BuildContext context, Function setStating) {
         return SliverToBoxAdapter(child: Text('Aucun article trouvé'));
       }
 
-      final docs = snapshot.data!.docs.reversed.toList();
+      var docs = CloudFirestore().trierDocs(snapshot.data!.docs, [
+        "dateTime",
+        true,
+      ]);
+
+      docs = CloudFirestore().trierDocs(snapshot.data!.docs, [
+        "dateTimeModif",
+        true,
+      ]);
+      //final docs = snapshot.data!.docs.reversed.toList();
 
       //return Text(data["nom"] ?? "");
 
@@ -366,27 +387,101 @@ Widget listeProduitBoutique0(BuildContext context, Function setStating) {
         ) {
           try {
             final data = docs[index].data() as Map<String, dynamic>;
-            if (data["status"] == 0) {
+            if (data["status"] == 0 &&
+                (filtreActif == "Tous" || filtreActif == "En traitément")) {
               return ContProduitBoutiqueTraitement(
                 data: data,
                 id: docs[index].id,
               );
-            } else if (data["status"] == 1) {
+            } else if (data["status"] == 1 &&
+                (filtreActif == "Tous" || filtreActif == "Réfusé")) {
               return ContProduitBoutiqueRefuse(data: data, id: docs[index].id);
-            } else if (data["status"] == 2) {
+            } else if (data["status"] == 2 &&
+                (filtreActif == "Tous" || filtreActif == "En Attente")) {
               return ContProduitBoutiqueAttenteModificationBoutique(
                 data: data,
                 id: docs[index].id,
               );
-            } else if (data["status"] == 3) {
+            } else if (data["status"] == 3 &&
+                (filtreActif == "Tous" || filtreActif == "Publiés")) {
               return ContProduitBoutiquePublie(data: data, id: docs[index].id);
+            } else if (data["status"] == 4 &&
+                (filtreActif == "Tous" || filtreActif == "Bloqués")) {
+              return ContProduitBoutiquePublieBloque(
+                data: data,
+                id: docs[index].id,
+              );
             }
-            return Text("data");
+            // return Text("data");
+            return SizedBox();
           } catch (e) {
             return SizedBox();
           }
         }),
       );
     },
+  );
+}
+
+String filtreActif = "Tous";
+Widget enteteFiltre(
+  BuildContext context, {
+  //required String filtreActif,
+  required Function(String) onFiltreChange,
+}) {
+  final List<Map<String, dynamic>> filtres = [
+    {'label': 'Tous', 'icone': Icons.all_inclusive},
+    {'label': 'Publiés', 'icone': Icons.check_circle_outline},
+    {'label': 'En traitément', 'icone': Icons.hourglass_top},
+    {'label': 'En Attente', 'icone': Icons.hourglass_top},
+    {'label': 'Bloqués', 'icone': Icons.block},
+    {'label': 'Réfusé', 'icone': Icons.cancel},
+  ];
+
+  return Container(
+    margin: EdgeInsets.all(20),
+    padding: EdgeInsets.all(10),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(5),
+    ),
+    child: SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: filtres.map((filtre) {
+          final bool estActif = filtre['label'] == filtreActif;
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6.0),
+            child: ChoiceChip(
+              label: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    filtre['icone'],
+                    size: 18,
+                    color: estActif ? Colors.white : Colors.grey[600],
+                  ),
+                  const SizedBox(width: 4),
+
+                  Text(
+                    filtre['label'],
+                    style: TextStyle(
+                      color: estActif ? Colors.white : Colors.black,
+                    ),
+                  ),
+                ],
+              ),
+              selected: estActif,
+              onSelected: (_) => onFiltreChange(filtre['label']),
+              selectedColor: const Color.fromARGB(255, 217, 166, 119),
+              backgroundColor: Colors.grey[200],
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    ),
   );
 }

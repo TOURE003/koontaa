@@ -3,6 +3,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:koontaa/Commentaire/pageDeCommentaire.dart';
 import 'package:koontaa/functions/cloud_firebase.dart';
 import 'package:koontaa/functions/fonctions.dart';
+import 'package:koontaa/pages/compte/connection/page_connection.dart';
 import 'package:koontaa/pages/magasin/ajoutDeProduit.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 //import 'package:comment_tree/widgets/comment_tree_widget.dart';
@@ -117,7 +118,7 @@ class _PageArticleMagasinState extends State<PageArticleMagasin> {
 
       bottomNavigationBar: BottomAppBar(
         color: couleurDeApp(),
-        child: bouttonModifPageProduit(context),
+        child: bouttonModifPageProduit(context, widget.idArticle),
       ),
     );
   }
@@ -430,12 +431,62 @@ Widget defilementImagesHorizontales(
   );
 }
 
-Widget bouttonModifPageProduit(BuildContext context) {
+Widget bouttonModifPageProduit(BuildContext context, String idArticle) {
   return Container(
     margin: EdgeInsets.symmetric(horizontal: larg(context, ratio: 0.02)),
     width: double.infinity, // Prend toute la largeur disponible
     child: TextButton.icon(
-      onPressed: () {},
+      onPressed: () async {
+        final doc = await CloudFirestore().lectureUBdd(
+          "produits",
+          idDoc: idArticle,
+        );
+
+        if (doc != null && doc.exists) {
+          final data = doc.data() as Map<String, dynamic>;
+
+          tabPhoto = [];
+          for (
+            var i = 0;
+            i < data["listeImagesTemporairesProduit"].length;
+            i++
+          ) {
+            tabPhoto.add({
+              "lien": data["listeImagesTemporairesProduit"][i],
+              "image": null,
+              "message": "modif",
+            });
+          }
+
+          nomProduitAjoutController.text = data["nomTemporaireProduit"];
+          prixProduitAjoutController.text = data["prixTemporaireProduit"];
+          listeCocherTailleVetement = data["taillesVentementDisponibles"];
+          listeCocherPointureChessure = data["pointuresChaussureDisponible"];
+
+          //setState(() => enChargement = true);
+
+          //messageErreurBar(context, messageErr: "kjkjkj");
+          modificationProduit = false;
+          modificationProduitPublique = true;
+          afficheMessage = false;
+          //afficheMessage = true;
+          /*messageServerModifProduit =
+                                      widget.data["messageRefus"];*/
+          //tabPhoto = [];
+          tabImgeSup = [];
+
+          idProduitsModifie = idArticle;
+
+          if (!await CloudFirestore().checkConnexionFirestore()) {
+            messageErreurBar(context, messageErr: "Vérifiez votreconnection !");
+            return;
+          }
+
+          //setState(() => enChargement = false);
+
+          changePage(context, AjoutProduits(title: "Modification"));
+        }
+      },
       icon: Icon(Icons.edit, color: Colors.white),
       label: Text(
         "Modifier",
