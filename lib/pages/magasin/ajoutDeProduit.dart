@@ -77,7 +77,7 @@ class _AjoutProduitsState extends State<AjoutProduits> {
                 setState(() {});
               }),
               SizedBox(height: long(context, ratio: 0.025)),
-              modificationProduit!
+              /*modificationProduit!
                   ? boutonModifierArticle(context, () {
                       try {
                         setState(() {});
@@ -97,9 +97,42 @@ class _AjoutProduitsState extends State<AjoutProduits> {
                         setState(() {});
                       } catch (e) {}
                     })
-                  : SizedBox(),
+                  : SizedBox(),*/
             ],
           ),
+        ),
+      ),
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          //borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min, // ← très important
+          children: [
+            modificationProduit!
+                ? boutonModifierArticle(context, () {
+                    try {
+                      setState(() {});
+                    } catch (e) {}
+                  })
+                : SizedBox(),
+
+            modificationProduitPublique!
+                ? boutonModifierArticlePublique(context, () {
+                    setState(() {});
+                  })
+                : SizedBox(),
+
+            (!modificationProduit! && !modificationProduitPublique!)
+                ? boutonAjouterArticle(context, () {
+                    try {
+                      setState(() {});
+                    } catch (e) {}
+                  })
+                : SizedBox(),
+          ],
         ),
       ),
     );

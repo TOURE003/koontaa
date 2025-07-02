@@ -10,6 +10,8 @@ import 'package:koontaa/pages/compte/connection/page_connection.dart';
 import 'package:koontaa/pages/recherche/recherche.dart';
 import 'package:koontaa/functions/fonctions.dart';
 import 'package:koontaa/pages/compte/connection/page_redirection_compte_connection.dart';
+import 'package:koontaa/functions/videos.dart';
+import 'package:path/path.dart';
 //import 'package:koontaa/pages/compte/connection/page_connection.dart';
 
 PreferredSizeWidget homeAppBarre(context) {
@@ -288,11 +290,26 @@ Widget expp(Function setStating) {
       ),
       SliverList(
         delegate: SliverChildBuilderDelegate(childCount: 1, (context, index) {
-          return !(lienImage != "annule-file" &&
-                  lienImage != "err-file" &&
-                  lienImage != "0")
-              ? Text("pas d'image")
-              : Image.network(lienImage);
+          return video(
+            context,
+            'https://res.cloudinary.com/ddjkeamgh/video/upload/v1751459961/istockphoto-2187117127-640_adpp_is_kwf4cg.mp4',
+            control: true,
+            hauteur: long(context, ratio: 0.25),
+            largeur: larg(context, ratio: 0.1),
+          ); /*FutureBuilder(
+            future: videoDepuisUrl(
+              'https://res.cloudinary.com/ddjkeamgh/video/upload/v1751459961/istockphoto-2187117127-640_adpp_is_kwf4cg.mp4',
+            ),
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return Center(child: Text("Erreur : ${snapshot.error}"));
+              }
+              if (snapshot.data == null) {
+                return Center(child: Text("Erreur : ${snapshot.error}"));
+              }
+              return snapshot.data!;
+            },
+          );*/
         }),
       ),
     ],
