@@ -25,8 +25,12 @@ void changePage(BuildContext context, Widget page) {
   } catch (e) {}
 }
 
-Color couleurDeApp() {
-  return Color(0xFFF9EFE0);
+Color couleurDeApp({int nbr = 0}) {
+  if (nbr == 0) {
+    return Color(0xFFF9EFE0);
+  } else {
+    return Color(0xFFBE4A00);
+  }
   // BE4A00
 }
 
@@ -802,4 +806,55 @@ class MenuAction {
     required this.couleur,
     required this.onTap,
   });
+}
+
+int indiceElementLePlusProche(List<String> liste, String recherche) {
+  if (liste.isEmpty) return -1;
+
+  int? indexMin;
+  int? distanceMin;
+
+  for (int i = 0; i < liste.length; i++) {
+    int distance = _distanceLevenshtein(
+      liste[i].toLowerCase(),
+      recherche.toLowerCase(),
+    );
+
+    if (distanceMin == null || distance < distanceMin) {
+      distanceMin = distance;
+      indexMin = i;
+    }
+  }
+
+  return indexMin ?? -1;
+}
+
+/// Fonction privée : Distance de Levenshtein entre deux chaînes
+
+int _distanceLevenshtein(String a, String b) {
+  List<List<int>> dp = List.generate(
+    a.length + 1,
+    (_) => List.filled(b.length + 1, 0),
+  );
+
+  for (int i = 0; i <= a.length; i++) dp[i][0] = i;
+  for (int j = 0; j <= b.length; j++) dp[0][j] = j;
+
+  for (int i = 1; i <= a.length; i++) {
+    for (int j = 1; j <= b.length; j++) {
+      if (a[i - 1] == b[j - 1]) {
+        dp[i][j] = dp[i - 1][j - 1];
+      } else {
+        dp[i][j] =
+            1 +
+            [
+              dp[i - 1][j], // suppression
+              dp[i][j - 1], // insertion
+              dp[i - 1][j - 1], // substitution
+            ].reduce((a, b) => a < b ? a : b);
+      }
+    }
+  }
+
+  return dp[a.length][b.length];
 }

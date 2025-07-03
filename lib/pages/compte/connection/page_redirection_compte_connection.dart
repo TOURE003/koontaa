@@ -25,9 +25,7 @@ class _RedirectionPageCompteConnectionState
           return const CircularProgressIndicator();
         } else if (snapshot.hasData && autorisationChangePage) {
           //pageBottomIndex = 3;
-          return const Home(
-            title: "Home",
-          ); // MyHomePage(title: "Page d'Acceuil");
+          return const Home(); // MyHomePage(title: "Page d'Acceuil");
         } else {
           //pageBottomIndex = 0;
           return const PageConnection(

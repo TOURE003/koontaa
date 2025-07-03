@@ -35,9 +35,8 @@ class MyApp extends StatelessWidget {
           seedColor: const Color.fromARGB(255, 238, 232, 248),
         ),
       ),
-      home: Home(
-        title: 'Home Page',
-      ), //MonMagasin(title: "Magsin"), //const Home(title: 'Home Page'),
+      home: Home(),
+      //MonMagasin(title: "Magsin"), //const Home(title: 'Home Page'),
       //ImageUploadPage(), //ImgurUploader(), //const Home(title: 'Home Page'),
     );
   }

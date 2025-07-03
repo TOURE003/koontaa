@@ -1,3 +1,5 @@
+import 'dart:ffi';
+
 import 'package:app_settings/app_settings.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
@@ -6,7 +8,7 @@ import 'dart:math';
 Future<Position> getCurrentPosition() async {
   bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
   if (!serviceEnabled) {
-    //await AppSettings.openAppSettings(type: AppSettingsType.location);
+    await AppSettings.openAppSettings(type: AppSettingsType.location);
     //print("object");
     return Future.error('desactive');
   }
@@ -58,35 +60,51 @@ Future<String> getVilleUtilisateur(Position position) async {
 }
 
 /// Trie les villes en fonction de la distance à une ville de référence
-List<String> trierVillesParProximite({
-  required Map<String, String> villes,
-  required String villeReferenceCoord,
+
+List<dynamic> trierVillesParProximite({
+  required List<dynamic> villes,
+  required Map<String, dynamic> villeReference,
 }) {
-  // Parse coordonnées de la ville de référence
-  final coordsRef = villeReferenceCoord.split('/');
-  final refLat = double.tryParse(coordsRef[0]) ?? 0;
-  final refLon = double.tryParse(coordsRef[1]) ?? 0;
+  final refLat = _toDouble(villeReference['lat']);
+  final refLon = _toDouble(villeReference['lng']);
 
-  // Convertir chaque ville en une paire (nom, distance)
-  final distances = villes.entries.map((entry) {
-    final coords = entry.value.split('/');
-    final lat = double.tryParse(coords[0]) ?? 0;
-    final lon = double.tryParse(coords[1]) ?? 0;
-
+  // Ajouter une clé "distance" à chaque ville
+  final villesAvecDistance = villes.map((ville) {
+    final lat = _parseCoord(ville['lat']);
+    final lon = _parseCoord(ville['lng']);
     final distance = calculerDistance(refLat, refLon, lat, lon);
-    return MapEntry(entry.key, distance);
+
+    return {...ville, 'lat': lat, 'lng': lon, 'distance': distance};
   }).toList();
 
-  // Trier selon la distance
-  distances.sort((a, b) => a.value.compareTo(b.value));
+  // Tri croissant par distance
+  villesAvecDistance.sort(
+    (a, b) => (a['distance'] as double).compareTo(b['distance'] as double),
+  );
 
-  // Retourner la liste des noms triés
-  return distances.map((e) => e.key).toList();
+  return villesAvecDistance;
 }
 
-/// Calcule la distance entre deux points (en kilomètres) avec la formule de Haversine
+/// Convertit une coordonnée de string avec virgule ou autre format en double
+double _parseCoord(dynamic value) {
+  if (value is double) return value;
+  if (value is int) return value.toDouble();
+  if (value is String) {
+    return double.tryParse(value.replaceAll(',', '.')) ?? 0;
+  }
+  return 0;
+}
+
+/// Assure que la coordonnée est un double
+double _toDouble(dynamic value) {
+  if (value is double) return value;
+  if (value is int) return value.toDouble();
+  return double.tryParse(value.toString()) ?? 0;
+}
+
+/// Calcule la distance en km avec la formule de Haversine
 double calculerDistance(double lat1, double lon1, double lat2, double lon2) {
-  const rayonTerre = 6371; // Rayon moyen de la Terre en km
+  const rayonTerre = 6371; // km
 
   final dLat = _toRadians(lat2 - lat1);
   final dLon = _toRadians(lon2 - lon1);
@@ -97,8 +115,8 @@ double calculerDistance(double lat1, double lon1, double lat2, double lon2) {
           cos(_toRadians(lat2)) *
           sin(dLon / 2) *
           sin(dLon / 2);
-  final c = 2 * atan2(sqrt(a), sqrt(1 - a));
 
+  final c = 2 * atan2(sqrt(a), sqrt(1 - a));
   return rayonTerre * c;
 }
 

@@ -10,7 +10,7 @@ import 'package:koontaa/functions/fonctions.dart';
 import 'package:koontaa/functions/gps.dart';
 import 'package:koontaa/functions/storage.dart';
 import 'package:koontaa/pages/compte/connection/page_connection.dart';
-import 'package:koontaa/pages/home/home_widgets.dart';
+//import 'package:koontaa/pages/home/home_widgets.dart';
 import 'package:koontaa/pages/magasin/ajoutDeProduit.dart';
 import 'package:koontaa/pages/magasin/produitAttenteModificationBoutique_widget.dart';
 import 'package:koontaa/pages/magasin/produitPublieBloque_widget.dart';
