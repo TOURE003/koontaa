@@ -858,3 +858,45 @@ int _distanceLevenshtein(String a, String b) {
 
   return dp[a.length][b.length];
 }
+
+/// Affiche une boîte de dialogue avec deux boutons personnalisés.
+/// [context] : Contexte BuildContext nécessaire pour afficher la boîte.
+/// [titre] : Titre de la boîte.
+/// [message] : Message affiché dans la boîte.
+/// [texteBouton1], [texteBouton2] : Libellés des deux boutons.
+/// [actionBouton1], [actionBouton2] : Fonctions à exécuter quand les boutons sont pressés.
+void afficherBoiteDeuxBoutons({
+  required BuildContext context,
+  String titre = "Confirmation",
+  String message = "Voulez-vous continuer ?",
+  String texteBouton1 = "Annuler",
+  String texteBouton2 = "Continuer",
+  required VoidCallback actionBouton1,
+  required VoidCallback actionBouton2,
+}) {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text(titre),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // Ferme la boîte
+              actionBouton1();
+            },
+            child: Text(texteBouton1),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // Ferme la boîte
+              actionBouton2();
+            },
+            child: Text(texteBouton2),
+          ),
+        ],
+      );
+    },
+  );
+}

@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:koontaa/Commentaire/pageDeCommentaire.dart';
 import 'package:koontaa/functions/cloud_firebase.dart';
 import 'package:koontaa/functions/firebase_auth.dart';
 import 'package:koontaa/functions/fonctions.dart';
@@ -20,7 +23,7 @@ class _CreationMagasinState extends State<CreationMagasin> {
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      appBar: AppBar(),
+      appBar: AppBar(backgroundColor: couleurDeApp(nbr: 1)),
       body: SingleChildScrollView(
         child: Container(
           margin: EdgeInsets.all(20),
@@ -28,7 +31,10 @@ class _CreationMagasinState extends State<CreationMagasin> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              containerPhotoBoutique(context, () {}),
+              containerPhotoBoutique(context, () {
+                setState(() {});
+              }),
+
               SizedBox(height: 30),
               inputFieldNomBoutique(context, () {}),
               SizedBox(height: 15),
@@ -65,12 +71,11 @@ class _CreationMagasinState extends State<CreationMagasin> {
                   Icon(Icons.phone),
                 ],
               ),
-              ElevatedButton(
-                onPressed: () {
-                  villesBoutiqueGPS();
-                },
-                child: Text("data"),
-              ),
+              inputFieldcontactBoutique(context, () {}),
+              SizedBox(height: 15),
+              inputFieldEmailBoutique(context, () {}),
+              SizedBox(height: 15),
+              bouttonValidationCreerBoutique(context, () {}),
             ],
           ),
         ),
@@ -91,42 +96,89 @@ Widget containerPhotoBoutique(BuildContext context, Function setStating) {
       Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(30),
-          color: const Color.fromARGB(255, 178, 158, 137),
+          color: photoBoutique["image"] == null
+              ? Color.fromARGB(255, 178, 158, 137)
+              : Colors.transparent,
         ),
 
         //color: Colors.amber,
         width: larg(context, ratio: 0.40),
         height: long(context, ratio: 0.20),
-        child: Column(
-          children: [
-            Container(
-              //color: const Color.fromARGB(255, 179, 174, 158),
-              width: larg(context, ratio: 0.40),
-              height: long(context, ratio: 0.15),
-              child: IconButton(
-                onPressed: () async {
-                  photoBoutique = await imageUser(camera: true);
-                },
-                icon: Icon(Icons.camera_alt, size: long(context, ratio: 0.10)),
-              ),
-            ),
-            Container(
-              width: larg(context, ratio: 0.40),
-              height: long(context, ratio: 0.05),
-              child: IconButton(
-                onPressed: () async {
-                  photoBoutique = await imageUser(camera: false);
-                },
-                icon: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    Icon(Icons.photo, size: long(context, ratio: 0.035)),
-                    h8(context, texte: "Galérie"),
-                  ],
-                ),
-              ),
-            ),
-          ],
+        child: photoBoutique["image"] == null
+            ? Column(
+                children: [
+                  Container(
+                    //color: const Color.fromARGB(255, 179, 174, 158),
+                    width: larg(context, ratio: 0.40),
+                    height: long(context, ratio: 0.15),
+                    child: IconButton(
+                      onPressed: () async {
+                        photoBoutique = await imageUser(camera: true);
+                        setStating();
+                      },
+                      icon: Icon(
+                        Icons.camera_alt,
+                        size: long(context, ratio: 0.10),
+                      ),
+                    ),
+                  ),
+                  Container(
+                    width: larg(context, ratio: 0.40),
+                    height: long(context, ratio: 0.05),
+                    child: IconButton(
+                      onPressed: () async {
+                        photoBoutique = await imageUser(camera: false);
+                        setStating();
+                      },
+                      icon: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          Icon(Icons.photo, size: long(context, ratio: 0.035)),
+                          h8(context, texte: "Galérie"),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              )
+            : Center(child: imageTemporaireBoutique(context, setStating)),
+      ),
+    ],
+  );
+}
+
+Widget imageTemporaireBoutique(BuildContext context, Function setStating) {
+  return Stack(
+    children: [
+      ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          child: Image.file(
+            File(photoBoutique["image"].path),
+            fit: BoxFit.cover,
+            //width: double.infinity,
+            //height: 200,
+          ),
+        ),
+      ),
+      Positioned(
+        bottom: 12,
+        right: 12,
+        child: CircleAvatar(
+          backgroundColor: Colors.red.withOpacity(0.9),
+          radius: 20,
+          child: IconButton(
+            icon: Icon(Icons.delete, color: Colors.white, size: 20),
+            onPressed: () {
+              photoBoutique = {
+                "lien": "",
+                "image": null,
+                "message": "Création Boutique",
+              };
+              setStating();
+            },
+            tooltip: "Supprimer l'image",
+          ),
         ),
       ),
     ],
@@ -387,7 +439,7 @@ Future<List<dynamic>> villesBoutiqueGPS() async {
     if (lecture != null && lecture.docs.isNotEmpty) {
       final docs = lecture.docs;
       final data = docs[0].data() as Map<String, dynamic>;
-      print(data["villes"]);
+      print(localisation);
       listeVilleTrie = data["villes"];
       //print(data["villes"]);
     }
@@ -402,6 +454,8 @@ Future<List<dynamic>> villesBoutiqueGPS() async {
 
       nomBoutiqueController.text =
           " Boutique ${data["nom"].split(" ")[0]} Et Frères";
+      contactBoutiqueController.text = data["phone"] ?? "";
+      emailBoutiqueController.text = data["mail"] ?? "";
     }
   }
 
@@ -541,5 +595,133 @@ Widget inputFieldNomQuartierBoutique(
         ),
       ),
     ],
+  );
+}
+
+TextEditingController contactBoutiqueController = TextEditingController();
+Widget inputFieldcontactBoutique(BuildContext context, Function setStating) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      /*Text(
+        "Nom du Magasin",
+        style: TextStyle(fontSize: larg(context, ratio: 0.035)),
+      ),*/
+      TextFormField(
+        keyboardType: TextInputType.number,
+        onChanged: (value) {},
+        controller: contactBoutiqueController,
+        validator: (value) {
+          if (value == null || value == "") {
+            return "Ajoutez le prix de vente";
+          }
+          if (int.parse(value) <= 100) {
+            return "Somme suppérieur à 100FCFA";
+          }
+          return null;
+        },
+
+        decoration: InputDecoration(
+          //hint: h6(context, texte: "Quartier"),
+          label: h6(context, texte: "Téléphone"),
+          enabledBorder: OutlineInputBorder(
+            borderSide: BorderSide(
+              color: Colors.grey, // Couleur de la bordure
+              width: 1.0, // Épaisseur fine
+            ),
+            borderRadius: BorderRadius.circular(8), // Coins arrondis
+          ),
+
+          focusedBorder: OutlineInputBorder(
+            borderSide: BorderSide(
+              color: Color(0xFFBE4A00), // Orange Koontaa par exemple
+              width: 1.5, // Légèrement plus épaisse
+            ),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          filled: true,
+          fillColor: Colors.white,
+          //label: Text("hiden", style: TextStyle(fontSize: 20)),
+          border: OutlineInputBorder(
+            borderRadius: const BorderRadius.all(Radius.circular(15)),
+          ),
+        ),
+      ),
+    ],
+  );
+}
+
+TextEditingController emailBoutiqueController = TextEditingController();
+Widget inputFieldEmailBoutique(BuildContext context, Function setStating) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      /*Text(
+        "Nom du Magasin",
+        style: TextStyle(fontSize: larg(context, ratio: 0.035)),
+      ),*/
+      TextFormField(
+        keyboardType: TextInputType.emailAddress,
+        onChanged: (value) {},
+        controller: emailBoutiqueController,
+        validator: (value) {
+          if (value == null || value == "") {
+            return "Ajoutez le prix de vente";
+          }
+          if (int.parse(value) <= 100) {
+            return "Somme suppérieur à 100FCFA";
+          }
+          return null;
+        },
+
+        decoration: InputDecoration(
+          //hint: h6(context, texte: "Quartier"),
+          label: h6(context, texte: "Adrèsse Mail"),
+          enabledBorder: OutlineInputBorder(
+            borderSide: BorderSide(
+              color: Colors.grey, // Couleur de la bordure
+              width: 1.0, // Épaisseur fine
+            ),
+            borderRadius: BorderRadius.circular(8), // Coins arrondis
+          ),
+
+          focusedBorder: OutlineInputBorder(
+            borderSide: BorderSide(
+              color: Color(0xFFBE4A00), // Orange Koontaa par exemple
+              width: 1.5, // Légèrement plus épaisse
+            ),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          filled: true,
+          fillColor: Colors.white,
+          //label: Text("hiden", style: TextStyle(fontSize: 20)),
+          border: OutlineInputBorder(
+            borderRadius: const BorderRadius.all(Radius.circular(15)),
+          ),
+        ),
+      ),
+    ],
+  );
+}
+
+Widget bouttonValidationCreerBoutique(
+  BuildContext context,
+  Function setStating,
+) {
+  return SizedBox(
+    width: double.infinity, // prend toute la largeur disponible
+    child: ElevatedButton(
+      onPressed: () async {},
+      style: ElevatedButton.styleFrom(
+        elevation: 0, // pas d’ombre
+        backgroundColor: Color(0xffBE4A00), // ou toute autre couleur sauf rouge
+        foregroundColor: Colors.white, // couleur du texte/icône
+        padding: EdgeInsets.symmetric(vertical: 16), // hauteur du bouton
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10), // coins arrondis optionnels
+        ),
+      ),
+      child: Text("Créez le compte"),
+    ),
   );
 }
