@@ -21,7 +21,8 @@ import 'package:koontaa/pages/recherche/recherche.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class MonMagasin extends StatefulWidget {
-  const MonMagasin({super.key, required this.title});
+  final String idBoutique;
+  const MonMagasin({super.key, required this.title, required this.idBoutique});
 
   final String title;
 
@@ -33,14 +34,18 @@ class _MonMagasinState extends State<MonMagasin> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: pageMagasin(context, () {
+      body: pageMagasin(context, widget.idBoutique, () {
         setState(() {});
       }),
     );
   }
 }
 
-Widget pageMagasin(BuildContext context, Function setStating) {
+Widget pageMagasin(
+  BuildContext context,
+  String idBoutique,
+  Function setStating,
+) {
   return Container(
     color: Color(0xFFF9EFE0),
     child: CustomScrollView(
@@ -91,7 +96,7 @@ Widget pageMagasin(BuildContext context, Function setStating) {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       SizedBox(height: long(context, ratio: 0.05)),
-                      enteteMagasinInfo(context, setStating),
+                      enteteMagasinInfo(context, idBoutique, setStating),
                     ],
                   ),
                 ),
@@ -109,13 +114,17 @@ Widget pageMagasin(BuildContext context, Function setStating) {
             },
           ),
         ),
-        listeProduitBoutique0(context, setStating),
+        listeProduitBoutique0(context, idBoutique, setStating),
       ],
     ),
   );
 }
 
-Widget enteteMagasinInfo(BuildContext context, Function setStating) {
+Widget enteteMagasinInfo(
+  BuildContext context,
+  String idBoutique,
+  Function setStating,
+) {
   final espaceOption = 1 / 43;
   return Column(
     mainAxisAlignment: MainAxisAlignment.center,
@@ -300,12 +309,12 @@ Widget enteteMagasinInfo(BuildContext context, Function setStating) {
         ],
       ),
       SizedBox(height: long(context, ratio: 0.03)),
-      bouttonAjouterProduits(context),
+      bouttonAjouterProduits(context, idBoutique),
     ],
   );
 }
 
-Widget bouttonAjouterProduits(BuildContext context) {
+Widget bouttonAjouterProduits(BuildContext context, String idBoutique) {
   return Container(
     margin: EdgeInsets.symmetric(horizontal: larg(context, ratio: 0.02)),
     width: double.infinity, // Prend toute la largeur disponible
@@ -323,7 +332,10 @@ Widget bouttonAjouterProduits(BuildContext context) {
           modificationProduit = false;
         }
 
-        changePage(context, AjoutProduits(title: "add produits"));
+        changePage(
+          context,
+          AjoutProduits(title: "add produits", idBoutique: idBoutique),
+        );
       },
       icon: Icon(Icons.add_box, color: Colors.white),
       label: Text(
@@ -346,11 +358,15 @@ Widget bouttonAjouterProduits(BuildContext context) {
 }
 
 final CloudFirestore listeProduitMagasin0 = CloudFirestore();
-Widget listeProduitBoutique0(BuildContext context, Function setStating) {
+Widget listeProduitBoutique0(
+  BuildContext context,
+  String idBoutique,
+  Function setStating,
+) {
   return StreamBuilder(
     stream: listeProduitMagasin0.lectureBdd(
       "produits",
-      filtreCompose: cd("uidBoutique", "Indéfinit pour le moment"),
+      filtreCompose: cd("uidBoutique", idBoutique),
       //orderBy: ["dateTime", true],
     ),
     builder: (context, snapshot) {
@@ -364,7 +380,19 @@ Widget listeProduitBoutique0(BuildContext context, Function setStating) {
         );
       }
       if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-        return SliverToBoxAdapter(child: Text('Aucun article trouvé'));
+        return SliverToBoxAdapter(
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(30),
+              color: Colors.white,
+            ),
+            margin: EdgeInsets.all(25),
+
+            width: double.infinity,
+            padding: EdgeInsets.all(10),
+            child: Center(child: const Text('Aucun article trouvé')),
+          ),
+        );
       }
 
       var docs = CloudFirestore().trierDocs(snapshot.data!.docs, [

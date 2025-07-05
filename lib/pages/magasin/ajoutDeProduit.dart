@@ -16,7 +16,12 @@ bool? modificationProduitPublique;
 String? idProduitsModifie;
 
 class AjoutProduits extends StatefulWidget {
-  const AjoutProduits({super.key, required this.title});
+  final String idBoutique;
+  const AjoutProduits({
+    super.key,
+    required this.title,
+    required this.idBoutique,
+  });
 
   final String title;
 

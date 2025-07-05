@@ -1047,30 +1047,6 @@ Widget bouttonContinueAvecFaceBook(Function setStating, BuildContext context) {
   );
 }
 
-Widget circular({String message = "Connexion..."}) {
-  return Row(
-    mainAxisAlignment: MainAxisAlignment.center,
-    children: [
-      const SizedBox(
-        height: 20,
-        width: 20,
-        child: CircularProgressIndicator(
-          strokeWidth: 2,
-          color: Color(0xffBE4A00),
-        ),
-      ),
-      const SizedBox(width: 10),
-      Text(
-        message,
-        style: const TextStyle(
-          fontWeight: FontWeight.bold,
-          color: Colors.black,
-        ),
-      ),
-    ],
-  );
-}
-
 void messageErreurBar(
   BuildContext context, {
   String messageErr = "Une erreur s'est produit",

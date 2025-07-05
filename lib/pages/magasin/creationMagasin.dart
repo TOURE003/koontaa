@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:koontaa/Commentaire/pageDeCommentaire.dart';
@@ -8,6 +7,9 @@ import 'package:koontaa/functions/firebase_auth.dart';
 import 'package:koontaa/functions/fonctions.dart';
 import 'package:koontaa/functions/gps.dart';
 import 'package:koontaa/functions/storage.dart';
+import 'package:koontaa/pages/compte/connection/page_connection.dart';
+import 'package:koontaa/pages/magasin/MonMagasin.dart';
+import 'package:koontaa/pages/magasin/ajoutDeProduit.dart';
 
 class CreationMagasin extends StatefulWidget {
   const CreationMagasin({super.key, required this.title});
@@ -17,6 +19,10 @@ class CreationMagasin extends StatefulWidget {
   @override
   State<CreationMagasin> createState() => _CreationMagasinState();
 }
+
+final GlobalKey<FormState> _formKeyCreationNomBoutique = GlobalKey<FormState>();
+final GlobalKey<FormState> _formKeyCreationQuartierPhoneMailBoutique =
+    GlobalKey<FormState>();
 
 class _CreationMagasinState extends State<CreationMagasin> {
   @override
@@ -36,7 +42,11 @@ class _CreationMagasinState extends State<CreationMagasin> {
               }),
 
               SizedBox(height: 30),
-              inputFieldNomBoutique(context, () {}),
+
+              Form(
+                key: _formKeyCreationNomBoutique,
+                child: inputFieldNomBoutique(context, () {}),
+              ),
               SizedBox(height: 15),
               listeDeroulanteCategorie(context, () {}),
               SizedBox(height: 15),
@@ -56,26 +66,32 @@ class _CreationMagasinState extends State<CreationMagasin> {
                 setState(() {});
               }),
               SizedBox(height: 10),
-              inputFieldNomQuartierBoutique(context, () {}),
-
-              SizedBox(height: 15),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  h7(
-                    context,
-                    texte: "Contact",
-                    couleur: couleurDeApp(nbr: 1),
-                    gras: true,
-                  ),
-                  Icon(Icons.phone),
-                ],
+              Form(
+                key: _formKeyCreationQuartierPhoneMailBoutique,
+                child: Column(
+                  children: [
+                    inputFieldNomQuartierBoutique(context, () {}),
+                    SizedBox(height: 15),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        h7(
+                          context,
+                          texte: "Contact",
+                          couleur: couleurDeApp(nbr: 1),
+                          gras: true,
+                        ),
+                        Icon(Icons.phone),
+                      ],
+                    ),
+                    inputFieldcontactBoutique(context, () {}),
+                    SizedBox(height: 15),
+                    inputFieldEmailBoutique(context, () {}),
+                    SizedBox(height: 15),
+                    bouttonValidationCreerBoutique(context, () {}),
+                  ],
+                ),
               ),
-              inputFieldcontactBoutique(context, () {}),
-              SizedBox(height: 15),
-              inputFieldEmailBoutique(context, () {}),
-              SizedBox(height: 15),
-              bouttonValidationCreerBoutique(context, () {}),
             ],
           ),
         ),
@@ -200,10 +216,10 @@ Widget inputFieldNomBoutique(BuildContext context, Function setStating) {
         controller: nomBoutiqueController,
         validator: (value) {
           if (value == null || value == "") {
-            return "Ajoutez le prix de vente";
+            return "Nom de votre boutique";
           }
-          if (int.parse(value) <= 100) {
-            return "Somme suppérieur à 100FCFA";
+          if (value.length < 3) {
+            return "Nom trop court";
           }
           return null;
         },
@@ -336,7 +352,7 @@ Widget listeDeroulanteCategorie(BuildContext context, Function setStating) {
 //Champs de villes automatique
 Widget inputFieldVilleLocalisation(BuildContext context, Function setStating) {
   return FutureBuilder<List<dynamic>>(
-    future: villesBoutiqueGPS(),
+    future: villesBoutiqueGPS(setStating),
     builder: (context, snapshot) {
       /*if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
@@ -362,6 +378,7 @@ Widget inputFieldVilleLocalisation(BuildContext context, Function setStating) {
           villes: villesLocales,
           onSelection: (value) {
             villeSelectionnee = value;
+
             setStating();
           },
           controllerInitial: TextEditingController(text: villeSelectionnee),
@@ -376,6 +393,7 @@ Widget inputFieldVilleLocalisation(BuildContext context, Function setStating) {
         villes: listeVilleTrie,
         onSelection: (value) {
           villeSelectionnee = value;
+
           setStating();
         },
         controllerInitial: TextEditingController(text: villeSelectionnee),
@@ -385,6 +403,7 @@ Widget inputFieldVilleLocalisation(BuildContext context, Function setStating) {
 }
 
 String villeSelectionnee = "";
+TextEditingController villeBoutiqueController = TextEditingController();
 Widget champVilleAutocomplete({
   required BuildContext context,
   required List<dynamic> villes,
@@ -407,6 +426,7 @@ Widget champVilleAutocomplete({
     onSelected: onSelection,
     fieldViewBuilder: (context, controller, focusNode, onEditingComplete) {
       // Appliquer la valeur initiale si fournie
+      villeBoutiqueController = controller;
       if (controllerInitial != null && controller.text.isEmpty) {
         controller.text = controllerInitial.text;
       }
@@ -415,6 +435,15 @@ Widget champVilleAutocomplete({
         controller: controller,
         focusNode: focusNode,
         onEditingComplete: onEditingComplete,
+        validator: (value) {
+          if (value == null || value == "") {
+            return "Nom de votre boutique";
+          }
+          if (value.length < 3) {
+            return "Nom trop court";
+          }
+          return null;
+        },
         decoration: InputDecoration(
           labelText: "Ville",
           prefixIcon: const Icon(Icons.location_on, color: Colors.red),
@@ -427,8 +456,13 @@ Widget champVilleAutocomplete({
   );
 }
 
-Future<List<dynamic>> villesBoutiqueGPS() async {
+bool infosCompteAffiche = false;
+Position? positionGps;
+Future<List<dynamic>> villesBoutiqueGPS(Function setStating) async {
+  /*_chargement = true;
+  setStating();*/
   final Position localisation = await getCurrentPosition();
+  positionGps = localisation;
   List<dynamic> listeVilleTrie = villesLocales;
 
   if (await CloudFirestore().checkConnexionFirestore()) {
@@ -452,10 +486,13 @@ Future<List<dynamic>> villesBoutiqueGPS() async {
     if (lecture0 != null && lecture0.exists) {
       final data = lecture0.data() as Map<String, dynamic>;
 
-      nomBoutiqueController.text =
-          " Boutique ${data["nom"].split(" ")[0]} Et Frères";
-      contactBoutiqueController.text = data["phone"] ?? "";
-      emailBoutiqueController.text = data["mail"] ?? "";
+      if (!infosCompteAffiche) {
+        nomBoutiqueController.text =
+            " Boutique ${data["nom"].split(" ")[0]} Et Frères";
+        contactBoutiqueController.text = data["phone"] ?? "";
+        emailBoutiqueController.text = data["mail"] ?? "";
+        infosCompteAffiche = true;
+      }
     }
   }
 
@@ -468,7 +505,8 @@ Future<List<dynamic>> villesBoutiqueGPS() async {
   );
 
   // print(listeVilleTrie);
-
+  /*_chargement = false;
+  setStating();*/
   return listeVilleTrie;
 }
 
@@ -561,16 +599,16 @@ Widget inputFieldNomQuartierBoutique(
         controller: nomQuartierBoutiqueController,
         validator: (value) {
           if (value == null || value == "") {
-            return "Ajoutez le prix de vente";
+            return "Ajoutez votre quartier";
           }
-          if (int.parse(value) <= 100) {
-            return "Somme suppérieur à 100FCFA";
+          if (value.length < 3) {
+            return "Nom trop court";
           }
           return null;
         },
 
         decoration: InputDecoration(
-          hint: h6(context, texte: "Quartier"),
+          hint: h6(context, texte: "Quartier ou adrèsse"),
           enabledBorder: OutlineInputBorder(
             borderSide: BorderSide(
               color: Colors.grey, // Couleur de la bordure
@@ -612,11 +650,12 @@ Widget inputFieldcontactBoutique(BuildContext context, Function setStating) {
         onChanged: (value) {},
         controller: contactBoutiqueController,
         validator: (value) {
+          final phoneRegex = RegExp(r'^(0[0-9]{9}|\+225[0-9]{10})$');
           if (value == null || value == "") {
-            return "Ajoutez le prix de vente";
+            return "Contact de la boutique obligatoir";
           }
-          if (int.parse(value) <= 100) {
-            return "Somme suppérieur à 100FCFA";
+          if (!phoneRegex.hasMatch(value)) {
+            return "Vérifiez le numéro";
           }
           return null;
         },
@@ -665,11 +704,12 @@ Widget inputFieldEmailBoutique(BuildContext context, Function setStating) {
         onChanged: (value) {},
         controller: emailBoutiqueController,
         validator: (value) {
+          final emailRegex = RegExp(r"^[\w\.-]+@[\w\.-]+\.\w+$");
           if (value == null || value == "") {
-            return "Ajoutez le prix de vente";
+            return null;
           }
-          if (int.parse(value) <= 100) {
-            return "Somme suppérieur à 100FCFA";
+          if (!emailRegex.hasMatch(value)) {
+            return "Vérifiez votre mail";
           }
           return null;
         },
@@ -704,6 +744,7 @@ Widget inputFieldEmailBoutique(BuildContext context, Function setStating) {
   );
 }
 
+bool _chargement = false;
 Widget bouttonValidationCreerBoutique(
   BuildContext context,
   Function setStating,
@@ -711,7 +752,75 @@ Widget bouttonValidationCreerBoutique(
   return SizedBox(
     width: double.infinity, // prend toute la largeur disponible
     child: ElevatedButton(
-      onPressed: () async {},
+      onPressed: _chargement
+          ? null
+          : () async {
+              _chargement = true;
+              setStating();
+              if (_formKeyCreationNomBoutique.currentState!.validate() &&
+                  _formKeyCreationQuartierPhoneMailBoutique.currentState!
+                      .validate()) {
+                if (photoBoutique["image"] == null) {
+                  messageErreurBar(
+                    context,
+                    messageErr: "Ajoutez une Photo de votre boutique!",
+                    couleur: Colors.green,
+                  );
+                  _chargement = false;
+                  setStating();
+                } else {
+                  final String lienImage = await envoieImage(
+                    photoBoutique["image"],
+                  );
+                  if (lienImage != "err-file" && lienImage != "annule-file") {
+                    final Map<String, dynamic> donnees = {
+                      "idUser": AuthFirebase().currentUser != null
+                          ? AuthFirebase().currentUser!.uid
+                          : "inconnu",
+                      "lienLogo": lienImage,
+                      "nomBoutique": nomBoutiqueController.text,
+                      "categoriePrincipal": selectedCategorie ?? "Iconnu",
+                      "nomVille": villeBoutiqueController.text,
+                      "nomQuartier": nomQuartierBoutiqueController.text,
+                      "gpsLat": positionGps != null
+                          ? positionGps!.latitude
+                          : 0.0,
+                      "gpsLng": positionGps != null
+                          ? positionGps!.longitude
+                          : 0.0,
+
+                      "phone": contactBoutiqueController.text,
+                      "mail": emailBoutiqueController.text,
+                      "dateTime": await dd(),
+                    };
+                    final idBoutique = genererCodeAleatoire();
+                    final res = await CloudFirestore().ajoutBdd(
+                      "boutiques",
+                      donnees,
+                      uid: idBoutique,
+                    );
+                    _chargement = false;
+                    setStating();
+                    if (res) {
+                      changePage(
+                        context,
+                        MonMagasin(
+                          title: "Aficher Magasin",
+                          idBoutique: idBoutique,
+                        ),
+                      );
+                    }
+                  } else {
+                    messageErreurBar(
+                      context,
+                      messageErr: "Erreur-Vérifiez votre connection",
+                    );
+                    _chargement = false;
+                    setStating();
+                  }
+                }
+              }
+            },
       style: ElevatedButton.styleFrom(
         elevation: 0, // pas d’ombre
         backgroundColor: Color(0xffBE4A00), // ou toute autre couleur sauf rouge
@@ -721,7 +830,7 @@ Widget bouttonValidationCreerBoutique(
           borderRadius: BorderRadius.circular(10), // coins arrondis optionnels
         ),
       ),
-      child: Text("Créez le compte"),
+      child: !_chargement ? Text("Créez ma Boutique") : circular(message: ""),
     ),
   );
 }
