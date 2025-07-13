@@ -20,6 +20,7 @@ import 'package:koontaa/pages/magasin/produitTraitement_widget.dart';
 //import 'package:koontaa/pages/magasin/produitTraitement_Widget.dart';
 import 'package:koontaa/pages/recherche/recherche.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:path/path.dart';
 
 class MonMagasin extends StatefulWidget {
   final String idBoutique;
@@ -92,7 +93,7 @@ Widget pageMagasin(
                       )
                     : null,
                 background: Container(
-                  color: Color(0xFFF9EFE0),
+                  color: Colors.white,
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -127,191 +128,253 @@ Widget enteteMagasinInfo(
   Function setStating,
 ) {
   final espaceOption = 1 / 43;
-  return Column(
-    mainAxisAlignment: MainAxisAlignment.center,
-    children: [
-      Row(
-        children: [
-          Container(
-            width: larg(context, ratio: 1 / 2.5),
-            height: long(context, ratio: 1 / 5),
-            margin: EdgeInsets.symmetric(
-              horizontal: larg(context, ratio: 1 / 60),
-            ),
-            decoration: BoxDecoration(
-              //color: Colors.black,
-              borderRadius: BorderRadius.circular(larg(context, ratio: 1 / 50)),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(larg(context, ratio: 1 / 50)),
-              child: imageNetwork(
-                context,
-                'https://static.vecteezy.com/system/resources/thumbnails/015/131/911/small_2x/flat-cartoon-style-shop-facade-front-view-modern-flat-storefront-or-supermarket-design-png.png',
-              ),
-            ),
-          ),
-          SizedBox(
-            //color: Colors.green,
-            width: larg(context, ratio: 0.55),
-            height: long(context, ratio: 1 / 5),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(height: long(context, ratio: 0.04)),
-                h3(context, texte: "Ma boutique Koontaa"),
-                Row(
-                  children: [
-                    SizedBox(
-                      //color: Colors.blue,
-                      width: larg(context, ratio: 0.42),
-                      child: AutoSizeText(
-                        maxLines: 1, // 1 seule ligne
-                        overflow: TextOverflow.ellipsis, // Coupe
-                        "San pédro, Côte d'Ivoire",
-                        style: TextStyle(
-                          fontSize: larg(context, ratio: 1 / 25),
-                        ),
-                      ),
-                    ),
-                    Container(
-                      padding: EdgeInsets.all(larg(context, ratio: 0.006)),
-                      decoration: BoxDecoration(
-                        color: const Color.fromARGB(87, 48, 194, 48),
+  return Container(
+    color: Colors.white,
+    //padding: EdgeInsets.all(30),
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        FutureBuilder(
+          future: CloudFirestore().lectureUBdd("boutiques", idDoc: idBoutique),
+          builder: (context, snapshot) {
+            String nomBoutique = "";
+            String lienImage = "";
+            String textPosition = "";
 
-                        borderRadius: BorderRadius.circular(
-                          larg(context, ratio: 0.02),
-                        ),
-                      ),
-                      child: AutoSizeText("Active"),
+            if (snapshot.hasData || snapshot.data != null) {
+              final doc = snapshot.data;
+              final data = doc.data() as Map<String, dynamic>;
+              lienImage = data["lienLogo"];
+              nomBoutique = data["nomBoutique"];
+              textPosition = "${data["nomQuartier"]}, ${data["nomVille"]}";
+            }
+            return Row(
+              children: [
+                Container(
+                  width: larg(context, ratio: 1 / 2.5),
+                  height: long(context, ratio: 1 / 5),
+                  margin: EdgeInsets.symmetric(
+                    horizontal: larg(context, ratio: 1 / 60),
+                  ),
+                  decoration: BoxDecoration(
+                    //color: Colors.black,
+                    borderRadius: BorderRadius.circular(
+                      larg(context, ratio: 1 / 50),
                     ),
-                  ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(
+                      larg(context, ratio: 1 / 50),
+                    ),
+                    child: imageNetwork(
+                      context,
+                      lienImage,
+                      //'https://static.vecteezy.com/system/resources/thumbnails/015/131/911/small_2x/flat-cartoon-style-shop-facade-front-view-modern-flat-storefront-or-supermarket-design-png.png',
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  //color: Colors.green,
+                  width: larg(context, ratio: 0.55),
+                  height: long(context, ratio: 1 / 5),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(height: long(context, ratio: 0.04)),
+                      h3(context, texte: nomBoutique),
+                      Row(
+                        children: [
+                          SizedBox(
+                            //color: Colors.blue,
+                            width: larg(context, ratio: 0.42),
+                            child: AutoSizeText(
+                              maxLines: 1, // 1 seule ligne
+                              overflow: TextOverflow.ellipsis, // Coupe
+                              textPosition,
+                              style: TextStyle(
+                                fontSize: larg(context, ratio: 1 / 25),
+                              ),
+                            ),
+                          ),
+                          /*Container(
+                            padding: EdgeInsets.all(
+                              larg(context, ratio: 0.006),
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color.fromARGB(87, 48, 194, 48),
+
+                              borderRadius: BorderRadius.circular(
+                                larg(context, ratio: 0.02),
+                              ),
+                            ),
+                            child: AutoSizeText("Active"),
+                          ),*/
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ],
+            );
+          },
+        ),
+        SizedBox(height: long(context, ratio: 1 / 60)),
+        Row(
+          children: [
+            boutonProduits(context, idBoutique, () {}),
+
+            Container(
+              margin: EdgeInsets.only(left: larg(context, ratio: espaceOption)),
+              width: larg(context, ratio: 0.22),
+              height: long(context, ratio: 1 / 8),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(
+                  larg(context, ratio: 1 / 60),
+                ),
+                border: BoxBorder.all(
+                  color: const Color.fromARGB(255, 206, 198, 174),
+                ),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  AutoSizeText(
+                    "25",
+                    maxLines: 1, // 1 seule ligne
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: larg(context, ratio: 0.08)),
+                  ),
+                  AutoSizeText(
+                    "Ventes",
+                    maxLines: 1, // 1 seule ligne
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: larg(context, ratio: 0.03)),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+            Container(
+              margin: EdgeInsets.only(left: larg(context, ratio: espaceOption)),
+              width: larg(context, ratio: 0.22),
+              height: long(context, ratio: 1 / 8),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(
+                  larg(context, ratio: 1 / 60),
+                ),
+                border: BoxBorder.all(
+                  color: const Color.fromARGB(255, 206, 198, 174),
+                ),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  AutoSizeText(
+                    "0",
+                    maxLines: 1, // 1 seule ligne
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: larg(context, ratio: 0.08)),
+                  ),
+                  AutoSizeText(
+                    "Commendes",
+                    maxLines: 1, // 1 seule ligne
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: larg(context, ratio: 0.03)),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              margin: EdgeInsets.only(left: larg(context, ratio: espaceOption)),
+              width: larg(context, ratio: 0.22),
+              height: long(context, ratio: 1 / 8),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(
+                  larg(context, ratio: 1 / 60),
+                ),
+                border: BoxBorder.all(
+                  color: const Color.fromARGB(255, 206, 198, 174),
+                ),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  AutoSizeText(
+                    "0",
+                    maxLines: 1, // 1 seule ligne
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: larg(context, ratio: 0.08)),
+                  ),
+                  AutoSizeText(
+                    "Rétours",
+                    maxLines: 1, // 1 seule ligne
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: larg(context, ratio: 0.03)),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: long(context, ratio: 0.03)),
+        bouttonAjouterProduits(context, idBoutique),
+      ],
+    ),
+  );
+}
+
+int nbrBoutonActive = 0;
+Widget boutonProduits(
+  BuildContext context,
+  String idBoutique,
+  Function setStating, {
+  double espaceOption = 1 / 43,
+}) {
+  return GestureDetector(
+    onTap: () {
+      nbrBoutonActive = 0;
+      setStating();
+    },
+    child: Container(
+      margin: EdgeInsets.only(left: larg(context, ratio: espaceOption)),
+      width: larg(context, ratio: 0.22),
+      height: long(context, ratio: 1 / 8),
+      decoration: BoxDecoration(
+        color: nbrBoutonActive == 0
+            ? Color.fromARGB(155, 217, 166, 119)
+            : Colors.white,
+        borderRadius: BorderRadius.circular(larg(context, ratio: 1 / 60)),
+        border: BoxBorder.all(color: const Color.fromARGB(255, 206, 198, 174)),
       ),
-      SizedBox(height: long(context, ratio: 1 / 60)),
-      Row(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Container(
-            margin: EdgeInsets.only(left: larg(context, ratio: 1 / 60)),
-            width: larg(context, ratio: 0.22),
-            height: long(context, ratio: 1 / 8),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(larg(context, ratio: 1 / 60)),
-              border: BoxBorder.all(
-                color: const Color.fromARGB(255, 206, 198, 174),
-              ),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                AutoSizeText(
-                  "12",
-                  maxLines: 1, // 1 seule ligne
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: larg(context, ratio: 0.08)),
-                ),
-                AutoSizeText(
-                  "Produits",
-                  maxLines: 1, // 1 seule ligne
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: larg(context, ratio: 0.03)),
-                ),
-              ],
-            ),
+          StreamBuilder(
+            stream: CloudFirestore().lectureBdd("produits"),
+            builder: (context, snapshot) {
+              int nbr = 0;
+              if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
+                nbr = snapshot.data!.docs.length;
+              }
+
+              return AutoSizeText(
+                nbr.toString(),
+                maxLines: 1, // 1 seule ligne
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: larg(context, ratio: 0.08)),
+              );
+            },
           ),
-          Container(
-            margin: EdgeInsets.only(left: larg(context, ratio: espaceOption)),
-            width: larg(context, ratio: 0.22),
-            height: long(context, ratio: 1 / 8),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(larg(context, ratio: 1 / 60)),
-              border: BoxBorder.all(
-                color: const Color.fromARGB(255, 206, 198, 174),
-              ),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                AutoSizeText(
-                  "25",
-                  maxLines: 1, // 1 seule ligne
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: larg(context, ratio: 0.08)),
-                ),
-                AutoSizeText(
-                  "Ventes",
-                  maxLines: 1, // 1 seule ligne
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: larg(context, ratio: 0.03)),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            margin: EdgeInsets.only(left: larg(context, ratio: espaceOption)),
-            width: larg(context, ratio: 0.22),
-            height: long(context, ratio: 1 / 8),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(larg(context, ratio: 1 / 60)),
-              border: BoxBorder.all(
-                color: const Color.fromARGB(255, 206, 198, 174),
-              ),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                AutoSizeText(
-                  "0",
-                  maxLines: 1, // 1 seule ligne
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: larg(context, ratio: 0.08)),
-                ),
-                AutoSizeText(
-                  "Commendes",
-                  maxLines: 1, // 1 seule ligne
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: larg(context, ratio: 0.03)),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            margin: EdgeInsets.only(left: larg(context, ratio: espaceOption)),
-            width: larg(context, ratio: 0.22),
-            height: long(context, ratio: 1 / 8),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(larg(context, ratio: 1 / 60)),
-              border: BoxBorder.all(
-                color: const Color.fromARGB(255, 206, 198, 174),
-              ),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                AutoSizeText(
-                  "0",
-                  maxLines: 1, // 1 seule ligne
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: larg(context, ratio: 0.08)),
-                ),
-                AutoSizeText(
-                  "Rétours",
-                  maxLines: 1, // 1 seule ligne
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: larg(context, ratio: 0.03)),
-                ),
-              ],
-            ),
+
+          AutoSizeText(
+            "Articles",
+            maxLines: 1, // 1 seule ligne
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(fontSize: larg(context, ratio: 0.03)),
           ),
         ],
       ),
-      SizedBox(height: long(context, ratio: 0.03)),
-      bouttonAjouterProduits(context, idBoutique),
-    ],
+    ),
   );
 }
 

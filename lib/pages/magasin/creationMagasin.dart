@@ -777,6 +777,7 @@ Widget bouttonValidationCreerBoutique(
                       "idUser": AuthFirebase().currentUser != null
                           ? AuthFirebase().currentUser!.uid
                           : "inconnu",
+                      "status": 0,
                       "lienLogo": lienImage,
                       "nomBoutique": nomBoutiqueController.text,
                       "categoriePrincipal": selectedCategorie ?? "Iconnu",

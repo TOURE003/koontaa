@@ -131,7 +131,7 @@ class _AjoutProduitsState extends State<AjoutProduits> {
                 : SizedBox(),
 
             (!modificationProduit! && !modificationProduitPublique!)
-                ? boutonAjouterArticle(context, () {
+                ? boutonAjouterArticle(context, widget.idBoutique, () {
                     try {
                       setState(() {});
                     } catch (e) {}
@@ -1031,7 +1031,11 @@ Widget listeTaillesChessure(BuildContext context, Function setStating) {
   );
 }
 
-Widget boutonAjouterArticle(BuildContext context, Function setStating) {
+Widget boutonAjouterArticle(
+  BuildContext context,
+  String idBoutique,
+  Function setStating,
+) {
   return Container(
     //margin: EdgeInsets.symmetric(horizontal: larg(context, ratio: 0.02)),
     width: double.infinity, // Prend toute la largeur disponible
@@ -1047,7 +1051,7 @@ Widget boutonAjouterArticle(BuildContext context, Function setStating) {
                 }
 
                 if (await CloudFirestore().checkConnexionFirestore()) {
-                  ajoutProduit(context, setStating);
+                  ajoutProduit(context, idBoutique, setStating);
                 } else {
                   loadingEnvoieProduit = false;
                   setStating();
@@ -1143,7 +1147,11 @@ Widget titreTexbox(BuildContext context, {String text = "Text"}) {
 List imageEnvoyer = [];
 List<String> tabLien = [];
 bool loadingEnvoieProduit = false;
-void ajoutProduit(BuildContext context, Function setStating) async {
+void ajoutProduit(
+  BuildContext context,
+  String idBoutique,
+  Function setStating,
+) async {
   loadingEnvoieProduit = true;
   setStating();
   if (!await CloudFirestore().checkConnexionFirestore()) {
@@ -1177,7 +1185,7 @@ void ajoutProduit(BuildContext context, Function setStating) async {
   }
 
   final Map<String, dynamic> mapProduit = {
-    "uidBoutique": "Indéfinit pour le moment",
+    "uidBoutique": idBoutique,
     "nomLocalite": "daloa",
     "positionLocalite": [6.55, 7.55],
     "nomTemporaireProduit": nomProduitAjoutController.text,

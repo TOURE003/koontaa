@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:koontaa/functions/cloud_firebase.dart';
 import 'package:koontaa/functions/firebase_auth.dart';
 import 'package:koontaa/functions/fonctions.dart';
 import 'package:koontaa/pages/compte/connection/compte.dart';
 import 'package:koontaa/pages/compte/connection/page_connection.dart';
+import 'package:koontaa/pages/home/acceuille.dart';
 import 'package:koontaa/pages/recherche/recherche.dart';
 
 int nbrPageActif = 0;
@@ -57,9 +59,8 @@ class _HomeState extends State<Home> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: _showAppBar
-          ? AppBar(title: const Text('Vidéo & contenu'), elevation: 0)
-          : null,
+      backgroundColor: couleurDeApp(),
+      appBar: _showAppBar ? entetAppbar(context) : null,
 
       body: Stack(
         children: [
@@ -73,6 +74,8 @@ class _HomeState extends State<Home> {
                         setState(() {});
                       })
                     : SizedBox(),
+
+                nbrPageActif == 0 ? Acceuille(title: "Acceuille") : SizedBox(),
                 /*Container(
                   height: 250,
                   color: Colors.black,
@@ -225,6 +228,24 @@ Widget rechercheFactis(context) {
           ),
         ],
       ),
+    ),
+  );
+}
+
+//-------------------------------------------------------
+PreferredSizeWidget entetAppbar(BuildContext context) {
+  return AppBar(
+    //backgroundColor: couleurDeApp(nbr: 1),
+    title: Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            h5(context, texte: "Koontaa", gras: true),
+            Icon(Icons.search),
+          ],
+        ),
+      ],
     ),
   );
 }
