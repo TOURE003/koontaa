@@ -14,6 +14,7 @@ import 'package:comment_tree/comment_tree.dart';
 class PageArticleMagasin extends StatefulWidget {
   final String idArticle;
   final String lienImageBoutique;
+  final String idBoutique;
   final String nomBoutique;
   final String nomArticle;
   final String prixArticle;
@@ -24,6 +25,7 @@ class PageArticleMagasin extends StatefulWidget {
     required this.idArticle,
     required this.lienImageBoutique,
     required this.nomBoutique,
+    required this.idBoutique,
     required this.nomArticle,
     required this.prixArticle,
   });
@@ -118,7 +120,11 @@ class _PageArticleMagasinState extends State<PageArticleMagasin> {
 
       bottomNavigationBar: BottomAppBar(
         color: couleurDeApp(),
-        child: bouttonModifPageProduit(context, widget.idArticle),
+        child: bouttonModifPageProduit(
+          context,
+          widget.idArticle,
+          widget.idBoutique,
+        ),
       ),
     );
   }
@@ -431,7 +437,11 @@ Widget defilementImagesHorizontales(
   );
 }
 
-Widget bouttonModifPageProduit(BuildContext context, String idArticle) {
+Widget bouttonModifPageProduit(
+  BuildContext context,
+  String idArticle,
+  String idBoutique,
+) {
   return Container(
     margin: EdgeInsets.symmetric(horizontal: larg(context, ratio: 0.02)),
     width: double.infinity, // Prend toute la largeur disponible
@@ -484,7 +494,10 @@ Widget bouttonModifPageProduit(BuildContext context, String idArticle) {
 
           //setState(() => enChargement = false);
 
-          changePage(context, AjoutProduits(title: "Modification"));
+          changePage(
+            context,
+            AjoutProduits(title: "Modification", idBoutique: idBoutique),
+          );
         }
       },
       icon: Icon(Icons.edit, color: Colors.white),

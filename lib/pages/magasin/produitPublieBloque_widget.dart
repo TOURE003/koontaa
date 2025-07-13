@@ -12,11 +12,13 @@ import 'package:koontaa/pages/magasin/page_article_magasin.dart';
 class ContProduitBoutiquePublieBloque extends StatefulWidget {
   final Map<String, dynamic> data;
   final String id;
+  final String idBoutique;
 
   const ContProduitBoutiquePublieBloque({
     super.key,
     required this.data,
     required this.id,
+    required this.idBoutique,
   });
 
   @override
@@ -63,6 +65,7 @@ class _ContProduitBoutiquePublieBloqueState
                   "https://thumbs.dreamstime.com/b/boutique-34493816.jpg",
               nomArticle: infoDef()[1],
               prixArticle: widget.data["prixTemporaireProduit"],
+              idBoutique: widget.idBoutique,
             ),
           );
         },
@@ -216,6 +219,7 @@ class _ContProduitBoutiquePublieBloqueState
                                       nomArticle: infoDef()[1],
                                       prixArticle:
                                           widget.data["prixTemporaireProduit"],
+                                      idBoutique: widget.idBoutique,
                                     ),
                                   );
                                 },
@@ -276,7 +280,10 @@ class _ContProduitBoutiquePublieBloqueState
 
                                   changePage(
                                     context,
-                                    AjoutProduits(title: "Modification"),
+                                    AjoutProduits(
+                                      title: "Modification",
+                                      idBoutique: widget.idBoutique,
+                                    ),
                                   );
                                 },
                               ),

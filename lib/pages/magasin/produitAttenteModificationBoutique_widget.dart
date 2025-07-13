@@ -8,11 +8,13 @@ import 'package:koontaa/pages/magasin/ajoutDeProduit.dart';
 class ContProduitBoutiqueAttenteModificationBoutique extends StatefulWidget {
   final Map<String, dynamic> data;
   final String id;
+  final String idBoutique;
 
   const ContProduitBoutiqueAttenteModificationBoutique({
     super.key,
     required this.data,
     required this.id,
+    required this.idBoutique,
   });
 
   @override
@@ -95,7 +97,10 @@ class _ContProduitBoutiqueAttenteModificationBoutiqueState
 
           setState(() => enChargement = false);
 
-          changePage(context, AjoutProduits(title: "Modification"));
+          changePage(
+            context,
+            AjoutProduits(title: "Modification", idBoutique: widget.idBoutique),
+          );
         },
 
         child: Container(
@@ -231,7 +236,10 @@ class _ContProduitBoutiqueAttenteModificationBoutiqueState
 
                                   changePage(
                                     context,
-                                    AjoutProduits(title: "Modification"),
+                                    AjoutProduits(
+                                      title: "Modification",
+                                      idBoutique: widget.idBoutique,
+                                    ),
                                   );
                                 },
                               ),

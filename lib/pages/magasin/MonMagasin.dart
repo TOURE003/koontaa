@@ -16,7 +16,8 @@ import 'package:koontaa/pages/magasin/produitAttenteModificationBoutique_widget.
 import 'package:koontaa/pages/magasin/produitPublieBloque_widget.dart';
 import 'package:koontaa/pages/magasin/produitPublie_widget.dart';
 import 'package:koontaa/pages/magasin/produitRefuse_widget%20.dart';
-import 'package:koontaa/pages/magasin/produitTraitement_Widget.dart';
+import 'package:koontaa/pages/magasin/produitTraitement_widget.dart';
+//import 'package:koontaa/pages/magasin/produitTraitement_Widget.dart';
 import 'package:koontaa/pages/recherche/recherche.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -420,6 +421,7 @@ Widget listeProduitBoutique0(
               return ContProduitBoutiqueTraitement(
                 data: data,
                 id: docs[index].id,
+                idBoutique: idBoutique,
               );
             } else if (data["status"] == 1 &&
                 (filtreActif == "Tous" || filtreActif == "Réfusé")) {
@@ -429,15 +431,21 @@ Widget listeProduitBoutique0(
               return ContProduitBoutiqueAttenteModificationBoutique(
                 data: data,
                 id: docs[index].id,
+                idBoutique: idBoutique,
               );
             } else if (data["status"] == 3 &&
                 (filtreActif == "Tous" || filtreActif == "Publiés")) {
-              return ContProduitBoutiquePublie(data: data, id: docs[index].id);
+              return ContProduitBoutiquePublie(
+                data: data,
+                id: docs[index].id,
+                idBoutique: idBoutique,
+              );
             } else if (data["status"] == 4 &&
                 (filtreActif == "Tous" || filtreActif == "Bloqués")) {
               return ContProduitBoutiquePublieBloque(
                 data: data,
                 id: docs[index].id,
+                idBoutique: idBoutique,
               );
             }
             // return Text("data");
