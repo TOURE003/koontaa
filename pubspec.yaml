@@ -73,7 +73,6 @@ dependencies:
   video_player: ^2.10.0
   chewie: ^1.12.1
   animated_text_kit: ^4.2.3
-  flutter_instagram_storyboard: ^1.0.1
 
  
    

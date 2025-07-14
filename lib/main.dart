@@ -11,10 +11,13 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:koontaa/functions/cloud_firebase.dart';
 import 'package:koontaa/functions/firebase_auth.dart';
 import 'package:koontaa/functions/fonctions.dart';
+import 'package:koontaa/functions/videos.dart';
 import 'package:koontaa/pages/compte/connection/page_connection.dart';
 import 'package:koontaa/pages/home/home.dart';
+//import 'package:koontaa/pages/home/home.dart';
 import 'package:koontaa/pages/home/statusWidget.dart';
 import 'package:koontaa/pages/magasin/MonMagasin.dart';
+import 'package:path/path.dart';
 import 'firebase_options.dart';
 //https://res.cloudinary.com/ddjkeamgh/video/upload/v1751459961/istockphoto-2187117127-640_adpp_is_kwf4cg.mp4
 
@@ -36,22 +39,7 @@ class MyApp extends StatelessWidget {
           seedColor: const Color.fromARGB(255, 238, 232, 248),
         ),
       ),
-      home: KoontaaStoryApp([
-        [
-          [
-            Container(
-              color: Colors.orange,
-              width: larg(context),
-              height: long(context),
-              child: const Center(
-                child: Text("Promo sac 💼", style: TextStyle(fontSize: 20)),
-              ),
-            ),
-          ],
-          Center(child: Container(color: Colors.green, width: 25, height: 25)),
-          "Boutique koontaa",
-        ],
-      ]), //Home(),
+      home: Home(),
       //MonMagasin(title: "Magsin"), //const Home(title: 'Home Page'),
       //ImageUploadPage(), //ImgurUploader(), //const Home(title: 'Home Page'),
     );

@@ -4,7 +4,9 @@ import 'package:geolocator/geolocator.dart';
 import 'package:koontaa/functions/cloud_firebase.dart';
 import 'package:koontaa/functions/firebase_auth.dart';
 import 'package:koontaa/functions/fonctions.dart';
+import 'package:koontaa/functions/videos.dart';
 import 'package:koontaa/pages/home/pubKoontaCreeBoutique.dart';
+import 'package:koontaa/pages/home/statuswidget.dart';
 import 'package:koontaa/pages/magasin/MonMagasin.dart';
 import 'package:koontaa/pages/magasin/ajoutDeProduit.dart';
 import 'package:koontaa/pages/magasin/creationMagasin.dart';
@@ -21,7 +23,50 @@ class Acceuille extends StatefulWidget {
 class _AcceuilleState extends State<Acceuille> {
   @override
   Widget build(BuildContext context) {
-    return Column(children: [racourcieMagasin(context)]);
+    return Column(
+      children: [
+        racourcieMagasin(context),
+        KoontaaStoryApp([
+          [
+            [
+              h1(context, texte: "lkjlkjljljkljlj", couleur: Colors.white),
+              VideoWidget(
+                url:
+                    "https://res.cloudinary.com/ddjkeamgh/video/upload/v1751459961/istockphoto-2187117127-640_adpp_is_kwf4cg.mp4",
+              ),
+            ],
+            //h1(context, texte: "lkjlkjljljkljlj", couleur: Colors.white),
+            gifDepuisVideo(
+              context,
+              "https://res.cloudinary.com/ddjkeamgh/video/upload/v1751459961/istockphoto-2187117127-640_adpp_is_kwf4cg.mp4",
+            ), //CircleAvatar(backgroundColor: Colors.orange),
+            CircleAvatar(backgroundColor: Colors.orange),
+            "Alice",
+          ],
+          [
+            [
+              Text("Story 2A"),
+              Text("Story 2B"),
+              Container(
+                color: Colors.yellow,
+                width: larg(context),
+                height: long(context),
+              ),
+              VideoWidget(
+                url:
+                    "https://res.cloudinary.com/ddjkeamgh/video/upload/v1751459961/istockphoto-2187117127-640_adpp_is_kwf4cg.mp4",
+              ),
+            ],
+            gifDepuisVideo(
+              context,
+              "https://res.cloudinary.com/ddjkeamgh/video/upload/v1751459961/istockphoto-2187117127-640_adpp_is_kwf4cg.mp4",
+            ), //Icon(Icons.store, size: 60),
+            Icon(Icons.store, size: 60, color: Colors.white),
+            "Boutique B",
+          ],
+        ]),
+      ],
+    );
   }
 }
 

@@ -1,94 +1,132 @@
-//https://res.cloudinary.com/ddjkeamgh/video/upload/v1751469170/WhatsApp_Vid%C3%A9o_2025-07-02_%C3%A0_15.10.20_576c8628_uoaxqn.mp4
-
-import 'package:flutter/material.dart';
-import 'package:video_player/video_player.dart';
 import 'package:chewie/chewie.dart';
+import 'package:flutter/material.dart';
+import 'package:koontaa/functions/fonctions.dart';
+import 'package:video_player/video_player.dart';
 
-Future<Widget> videoDepuisUrl(
-  String url, {
-  double hauteur = 0,
-  double largeur = 0,
-  bool control = false,
-  double ratioHauteur = 0,
-  double ratioLargeur = 0,
-}) async {
+class VideoWidget extends StatefulWidget {
+  final String url;
+  final double hauteur;
+  final double largeur;
+  final bool control;
+  final double ratioHauteur;
+  final double ratioLargeur;
+
+  const VideoWidget({
+    super.key,
+    required this.url,
+    this.hauteur = 0,
+    this.largeur = 0,
+    this.control = false,
+    this.ratioHauteur = 0,
+    this.ratioLargeur = 0,
+  });
+
+  @override
+  State<VideoWidget> createState() => _VideoWidgetState();
+}
+
+class _VideoWidgetState extends State<VideoWidget> {
+  late VideoPlayerController _videoController;
+  ChewieController? _chewieController;
   double ratio = 1;
 
-  final videoPlayerController = VideoPlayerController.networkUrl(
-    Uri.parse(url),
-  );
-
-  await videoPlayerController.initialize();
-  videoPlayerController.setVolume(0.0);
-
-  if (ratioHauteur != 0) {
-    ratio = videoPlayerController.value.size.height / ratioHauteur;
-  } else if (ratioLargeur != 0) {
-    ratio = videoPlayerController.value.size.width / ratioLargeur;
+  @override
+  void initState() {
+    super.initState();
+    _initializeVideo();
   }
 
-  final chewieController = ChewieController(
-    videoPlayerController: videoPlayerController,
-    autoPlay: true,
-    looping: true,
-    allowFullScreen: true,
-    showControls: control,
-  );
+  Future<void> _initializeVideo() async {
+    _videoController = VideoPlayerController.networkUrl(Uri.parse(widget.url));
+    await _videoController.initialize();
+    _videoController.setVolume(0.0);
 
-  final playerWidget = Chewie(controller: chewieController);
+    if (widget.ratioHauteur != 0) {
+      ratio = _videoController.value.size.height / widget.ratioHauteur;
+    } else if (widget.ratioLargeur != 0) {
+      ratio = _videoController.value.size.width / widget.ratioLargeur;
+    }
 
-  return Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-    child: Center(
-      child: SizedBox(
-        width: largeur == 0
-            ? videoPlayerController.value.size.width / ratio
-            : largeur, //300, // largeur fixe
-        height: hauteur == 0
-            ? videoPlayerController.value.size.height / ratio
-            : hauteur, //400, // hauteur fixe
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(12),
-          child: FittedBox(
-            fit: BoxFit.cover, // IMPORTANT : remplissage + rognage
-            child: SizedBox(
-              width: videoPlayerController.value.size.width,
-              height: videoPlayerController.value.size.height,
-              child: playerWidget,
+    _chewieController = ChewieController(
+      videoPlayerController: _videoController,
+      autoPlay: true,
+      looping: true,
+      allowFullScreen: true,
+      showControls: widget.control,
+    );
+
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    _videoController.dispose();
+    _chewieController?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_chewieController == null || !_videoController.value.isInitialized) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: Center(
+        child: SizedBox(
+          width: widget.largeur == 0
+              ? _videoController.value.size.width / ratio
+              : widget.largeur,
+          height: widget.hauteur == 0
+              ? _videoController.value.size.height / ratio
+              : widget.hauteur,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: FittedBox(
+              fit: BoxFit.cover,
+              child: SizedBox(
+                width: _videoController.value.size.width,
+                height: _videoController.value.size.height,
+                child: Chewie(controller: _chewieController!),
+              ),
             ),
           ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }
 
-Widget video(
+Widget gifDepuisVideo(
   BuildContext context,
-  String url, {
-  double hauteur = 0,
-  double largeur = 0,
-  bool control = false,
-  double ratioHauteur = 0,
-  double ratioLargeur = 0,
+  String lienVideo, {
+  double? largeur,
+  double? hauteur,
+  BoxFit fit = BoxFit.cover,
+  double borderRadius = 8,
 }) {
-  return FutureBuilder(
-    future: videoDepuisUrl(
-      url,
-      hauteur: hauteur,
-      largeur: largeur,
-      control: control,
-      ratioHauteur: ratioHauteur,
-      ratioLargeur: ratioLargeur,
-    ),
-    builder: (context, snapshot) {
-      if (snapshot.hasError) {
-        return Center(child: Text("Erreur : ${snapshot.error}"));
-      }
-      if (snapshot.data == null) {
-        return Center(child: Text("Erreur : ${snapshot.error}"));
-      }
-      return snapshot.data!;
-    },
+  final uri = Uri.parse(lienVideo);
+  final segments = uri.pathSegments;
+
+  int uploadIndex = segments.indexOf('upload');
+  if (uploadIndex == -1 || uploadIndex >= segments.length - 1) {
+    return const Text('URL invalide');
+  }
+
+  // Ajout de fl_animated pour boucle infinie
+  final gifSegments = [
+    ...segments.sublist(0, uploadIndex + 1),
+    'f_gif,du_5,so_0,fl_animated',
+    ...segments.sublist(uploadIndex + 1),
+  ];
+
+  String gifUrl = '${uri.scheme}://${uri.host}/${gifSegments.join('/')}';
+  gifUrl = gifUrl.replaceAll("mp4", "gif");
+  print("URL GIF animé : $gifUrl");
+
+  return ClipRRect(
+    borderRadius: BorderRadius.circular(borderRadius),
+    child: imageNetwork(context, gifUrl),
   );
 }
